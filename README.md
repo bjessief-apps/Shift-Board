@@ -1,6 +1,18 @@
-https://bjessief-apps.github.io/Shift-Board/
-
 # Shift Board
+
+**Try it:** https://bjessief-apps.github.io/Shift-Board/ (works best on a phone)
+
+Every shift at a warehouse posts its numbers at the end of the day, and then they just get buried in a group chat. I wanted to see how shifts actually stack up over weeks, who's fastest, where the labor is going, without scrolling back through screenshots. You paste in the report and Shift Board does the math.
+
+<table>
+  <tr>
+    <td align="center"><img src="screenshots/1-overview.png" width="220" alt="Overview"><br><sub>Overview</sub></td>
+    <td align="center"><img src="screenshots/2-shifts.png" width="220" alt="Every shift, ranked"><br><sub>Every shift, ranked</sub></td>
+    <td align="center"><img src="screenshots/3-people.png" width="220" alt="People"><br><sub>People</sub></td>
+  </tr>
+</table>
+
+<sub>Screenshots use a made-up warehouse with sample names and numbers. Real data never leaves your phone.</sub>
 
 A simple, private shift logger for warehouse crews. Log each shift's start and end-of-day numbers and door-by-door work, and the board ranks shifts and people for you.
 
