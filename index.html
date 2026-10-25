@@ -56,7 +56,29 @@ tr.click{cursor:pointer}
 tr.click:hover td{background:var(--panel2)}
 .scroll{overflow-x:auto}
 .tag{display:inline-block;border-radius:2px;padding:0 6px;font-size:11px;font-weight:700;line-height:18px;color:#fff}
-.t1st{background:var(--s1)} .t2nd{background:var(--s2)} .t3rd{background:var(--s3);color:#141414}
+button.danger{background:var(--bad);border-color:var(--bad);color:#fff;font-weight:600}
+.intro p{margin:0 0 8px}
+.intro p:last-child{margin-bottom:0}
+.shcard{border:1px solid var(--line);border-radius:var(--r);background:var(--panel2);padding:4px 12px 12px;margin-top:10px}
+.shcard .hd{display:flex;gap:8px;align-items:flex-end}
+.shcard .hd>div{flex:1}
+.days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.days button{min-width:0;padding:7px 0;font-size:12px;font-weight:600;background:var(--panel)}
+.days button.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.tot{font-size:12px;color:var(--muted);margin-top:8px}
+.tot b{color:var(--text)}
+.crew{list-style:none;margin:8px 0 0;padding:0;border:1px solid var(--line);border-radius:var(--r)}
+.crew li{display:flex;align-items:center;gap:8px;padding:6px 6px 6px 12px;border-bottom:1px solid var(--line)}
+.crew li:last-child{border-bottom:0}
+.crew li span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
+.crew li select{width:auto;max-width:46%;padding:4px 6px;font-size:12px}
+.x{background:transparent;border-color:transparent;color:var(--muted);padding:4px 8px}
+.x:hover{color:var(--bad);border-color:transparent}
+.dirty{font-size:12px;color:var(--accent)}
+.confirm{border:1px solid var(--bad);border-radius:var(--r);padding:12px;margin-top:12px}
+.confirm p{margin:0 0 8px}
+.check{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--text);text-transform:none;letter-spacing:0;margin:8px 0 10px}
+.check input{width:auto}
 .rank{display:inline-block;min-width:22px;text-align:center;font-size:12px;font-weight:700;color:var(--muted)}
 .rank.g{color:var(--accent)}
 .detail{background:var(--panel2);border-left:2px solid var(--accent);padding:10px 12px;margin:4px 0 8px;white-space:normal}
@@ -100,12 +122,33 @@ svg text{fill:var(--muted);font-size:10px}
    Your own setup (site name, crew names, past shifts) comes from a personal pack file
    you load on your device; none of it lives in this page. */
 const KEY = "shiftboard.v1";
-const DEFAULT_SETTINGS = { title:"Shift Board", workerWord:"Workers", supportLabel:"Support", hours:{"1st":8,"2nd":8,"3rd":8}, crew:[], source:"" };
+const DKEY = "shiftboard.draft";
+const DEFAULT_SETTINGS = { title:"", workerWord:"Workers", supportLabel:"Support", shifts:[], crew:[], source:"" };
+const DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+const PALETTE = ["#3d7fd9","#8a63d8","#c27a12","#2e9466","#cf4f6f","#1f97a3","#8f7d22"];
 
 function load(){ try{ return JSON.parse(localStorage.getItem(KEY)) || {}; }catch(e){ return {}; } }
 let DB = Object.assign({settings:{}, base:[], shifts:{}, deleted:[], containers:[], theme:null}, load());
-const S = () => Object.assign({}, DEFAULT_SETTINGS, DB.settings, {hours:Object.assign({}, DEFAULT_SETTINGS.hours, (DB.settings||{}).hours)});
-function save(){ try{ localStorage.setItem(KEY, JSON.stringify(DB)); }catch(e){ toast("Couldn't save on this device"); } }
+function save(){ _SA = null; try{ localStorage.setItem(KEY, JSON.stringify(DB)); }catch(e){ toast("Couldn't save on this device"); } }
+
+/* Shift schedules. Older backups and packs stored 1st/2nd/3rd shift hours; those become named shifts. */
+function normShifts(st){
+  let list = Array.isArray(st.shifts) ? st.shifts : null;
+  if (!list){ const h = st.hours || {}; list = Object.keys(h).map(id=>({id, name:id+" shift", hours:+h[id]||null})); }
+  return list.filter(x=>x && x.id).map(x=>({id:String(x.id), name:String(x.name||x.id), days:Array.isArray(x.days)?x.days.map(Number):[], start:x.start||"", end:x.end||"", hours:x.hours!=null&&+x.hours>0?+x.hours:null}));
+}
+function normCrew(c){
+  const seen = new Set();
+  return (c||[]).map(x=> typeof x==="string" ? {name:x.trim(), shift:""} : {name:String((x&&x.name)||"").trim(), shift:(x&&x.shift)||""})
+    .filter(x=>{ const k=x.name.toLowerCase(); if(!x.name||seen.has(k)) return false; seen.add(k); return true; });
+}
+const S = () => { const raw = DB.settings||{}; const st = Object.assign({}, DEFAULT_SETTINGS, raw); st.shifts = normShifts(raw); st.crew = normCrew(raw.crew); st.title = (st.title||"").trim() || "Shift Board"; return st; };
+const isBlank = () => !Object.keys(DB.settings||{}).length && !(DB.base||[]).length && !Object.keys(DB.shifts||{}).length && !(DB.containers||[]).length;
+
+/* Unsaved input, kept across refreshes until it's saved or cleared. */
+let DRAFT = (()=>{ try{ return JSON.parse(localStorage.getItem(DKEY)) || {}; }catch(e){ return {}; } })();
+DRAFT.f = DRAFT.f || {}; DRAFT.scroll = DRAFT.scroll || {};
+function saveDraft(){ try{ localStorage.setItem(DKEY, JSON.stringify(DRAFT)); }catch(e){ /* ignore */ } }
 
 /* ---------------- helpers ---------------- */
 const $ = s => document.querySelector(s);
@@ -116,7 +159,20 @@ const iso = d => d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+
 const weekStart = s => { const d=pd(s); d.setDate(d.getDate()-d.getDay()); return iso(d); };
 const dayLbl = s => pd(s).toLocaleDateString(undefined,{weekday:"short",month:"short",day:"numeric"});
 const wkLbl = s => { const a=pd(s), b=pd(s); b.setDate(b.getDate()+6); return a.toLocaleDateString(undefined,{month:"short",day:"numeric"})+" – "+b.toLocaleDateString(undefined,{month:"short",day:"numeric"}); };
-const tag = sh => `<span class="tag t${sh}">${sh}</span>`;
+/* every shift: the ones in Setup first, then any shift name found in logged data that isn't in Setup */
+let _SA = null;
+function shiftsAll(){
+  if (_SA) return _SA;
+  const list = S().shifts.slice(), ids = new Set(list.map(x=>x.id));
+  const add = id => { if(id && !ids.has(id)){ ids.add(id); list.push({id, name:id, days:[], start:"", end:"", hours:null, orphan:true}); } };
+  for (const s of allShifts()) add(s.shift);
+  for (const c of DB.containers) add(c.shift);
+  return (_SA = list);
+}
+const shiftInfo = id => { const all=shiftsAll(), i=all.findIndex(x=>x.id===id); return i<0 ? {id, name:id||"–", hours:null, color:PALETTE[0], i:99} : Object.assign({}, all[i], {color:PALETTE[i%PALETTE.length], i}); };
+const shiftName = id => shiftInfo(id).name;
+function shiftHours(x){ if(!x) return null; if(x.start && x.end){ const h=durH(x.start,x.end); return h>0?h:null; } return x.hours||null; }
+const tag = id => { const x=shiftInfo(id); return `<span class="tag" style="background:${x.color}">${esc(x.name)}</span>`; };
 function toast(t){ const el=$("#toast"); el.textContent=t; el.classList.add("show"); clearTimeout(toast.t); toast.t=setTimeout(()=>el.classList.remove("show"),2200); }
 const uid = () => Math.random().toString(36).slice(2,9);
 const mins = t => { if(!t) return null; const [h,m]=t.split(":").map(Number); return h*60+m; };
@@ -128,7 +184,8 @@ function allShifts(){
   for (const s of DB.base||[]) map[s.id] = JSON.parse(JSON.stringify(s));
   for (const [id,s] of Object.entries(DB.shifts)) map[id] = Object.assign(map[id]||{}, s, {edited:true});
   for (const id of DB.deleted) delete map[id];
-  return Object.values(map).sort((a,b)=> a.date<b.date?-1:a.date>b.date?1:a.shift<b.shift?-1:1);
+  const order = S().shifts.map(x=>x.id), o = id => { const i=order.indexOf(id); return i<0 ? 99 : i; };
+  return Object.values(map).sort((a,b)=> a.date<b.date?-1:a.date>b.date?1:(o(a.shift)-o(b.shift)) || (a.shift<b.shift?-1:1));
 }
 function metrics(s){
   const e=s.eod||{}, st=s.start||{};
@@ -136,14 +193,14 @@ function metrics(s){
   const other = e.lumpersOther ?? st.lumpersOther ?? 0;
   const labor = workers==null ? null : workers + (other||0);
   const completed = e.completed ?? null;
-  const hours = S().hours[s.shift] || 8;
+  const hours = shiftHours(shiftInfo(s.shift));
   const cons = DB.containers.filter(c=>c.date===s.date && c.shift===s.shift);
   const pieces = cons.reduce((a,c)=>a+(+c.pieces||0),0);
   return {
     workers, other, labor, completed, carried: e.carried ?? null,
     support: e.osEpj ?? st.osEpj ?? null,
     perWorker: labor && completed!=null ? completed/labor : null,
-    lhpc: labor && completed ? labor*hours/completed : null,
+    lhpc: labor && completed && hours ? labor*hours/completed : null, hours,
     pieces: pieces||null, ranked: labor!=null && completed!=null
   };
 }
@@ -152,8 +209,13 @@ const inRange = d => { const r=$("#range").value; return r==="all" || weekStart(
 /* ---------------- report paste parser ---------------- */
 function parseReport(text){
   const first = (text.split(/\r?\n/).find(l=>l.trim())||"").toLowerCase();
-  let shift = null; const m0 = first.match(/\b(1st|2nd|3rd|first|second|third)\s+shift/);
-  if (m0) shift = ({first:"1st",second:"2nd",third:"3rd"})[m0[1]]||m0[1];
+  const norm = x => String(x).toLowerCase().replace(/\bfirst\b/g,"1st").replace(/\bsecond\b/g,"2nd").replace(/\bthird\b/g,"3rd").replace(/\s+/g," ").trim();
+  const reEsc = x => x.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+  const fl = norm(first); let shift = null, best = 0;
+  for (const sh of S().shifts){
+    const n = norm(sh.name), core = n.replace(/ shift$/,"");
+    for (const cand of [n, core+" shift", core]) if (cand && cand.length>best && new RegExp("(^|\\W)"+reEsc(cand)+"(\\W|$)").test(fl)){ shift = sh.id; best = cand.length; }
+  }
   const kind = /eod|end of day|end of shift/i.test(text) ? "eod" : "start";
   const f = {}; const seen = new Set(); const add=(k,n)=>{ f[k]=(f[k]||0)+n; };
   const W = "(?:lumpers?|workers?|unloaders?|crew|people)";
@@ -198,7 +260,7 @@ function parseReport(text){
 }
 
 /* ---------------- views ---------------- */
-let TAB = "dash", SORT = {k:"lhpc", dir:1}, OPEN = null, SHIFTF = "all", PICK = new Set();
+let TAB = "dash", SORT = {k:"lhpc", dir:1}, OPEN = null, SHIFTF = "all", PICK = new Set(DRAFT.pick||[]), CLEARING = false;
 const TABS = [["dash","Overview"],["shifts","Shifts"],["workers","People"],["log","Log"],["data","Setup"]];
 function lbl(){ const s=S(); return {lumpers:s.workerWord.toLowerCase(),lumpersOther:"from other shift",containers:"containers",completed:"completed",carried:"left over",osEpj:s.supportLabel,yard:"yard count",shipping:"shipping",sentHome:"sent home",yardContainers:"in yard"}; }
 const fields2txt = f => { const L=lbl(); return Object.entries(f||{}).map(([k,v])=>`${v} ${L[k]||k}`).join(" · "); };
@@ -215,26 +277,39 @@ function renderRange(){
   $("#range").innerHTML = `<option value="all">All weeks</option>` + weeks.map(w=>`<option value="${w}">Wk of ${wkLbl(w)}</option>`).join("");
   $("#range").value = [...$("#range").options].some(o=>o.value===cur) ? cur : "all";
 }
+const DRAFT_FIELDS = ["pasteTxt","pDate","pShift","pKind","cDate","cShift","cDoor","cTrailer","cPieces","cStatus","cStart","cEnd","cNotes","newName"];
 function render(){
+  _SA = null;
   renderHead();
   $("#main").innerHTML = ({dash:viewDash, shifts:viewShifts, workers:viewWorkers, log:viewLog, data:viewData})[TAB]();
-  if (TAB==="log") wireLog();
+  if (TAB==="log"){
+    for (const id of DRAFT_FIELDS){ const el=$("#"+id), v=DRAFT.f[id]; if(el && v!=null && [...(el.options||[{value:v}])].some(o=>o.value===v)) el.value=v; }
+    updatePreview(false);
+  }
+}
+function go(tab){
+  DRAFT.scroll[TAB] = window.scrollY; TAB = tab; OPEN = null;
+  SORT = TAB==="workers"?{k:"pieces",dir:-1}:TAB==="shifts"?{k:"date",dir:-1}:SORT;
+  render(); window.scrollTo(0, DRAFT.scroll[TAB]||0); saveDraft();
 }
 function byType(list){
-  const out={}, H=S().hours;
-  for (const sh of ["1st","2nd","3rd"]){
+  const out={};
+  for (const info of shiftsAll()){
+    const sh=info.id, H=shiftHours(info);
     const rows=list.filter(s=>s.shift===sh).map(s=>({s,m:metrics(s)})).filter(x=>x.m.ranked);
     const lab=rows.reduce((a,x)=>a+x.m.labor,0), comp=rows.reduce((a,x)=>a+x.m.completed,0), car=rows.reduce((a,x)=>a+(x.m.carried||0),0);
-    out[sh]={n:rows.length, avgLab:rows.length?lab/rows.length:null, avgComp:rows.length?comp/rows.length:null, perWorker: lab?comp/lab:null, lhpc: comp?lab*(H[sh]||8)/comp:null, comp, carried:car};
+    out[sh]={info, hours:H, n:rows.length, avgLab:rows.length?lab/rows.length:null, avgComp:rows.length?comp/rows.length:null, perWorker: lab?comp/lab:null, lhpc: comp&&H?lab*H/comp:null, comp, carried:car};
   }
   return out;
 }
 function viewDash(){
   const list = allShifts().filter(s=>inRange(s.date));
   if (!list.length) return welcome();
-  const ms = list.map(s=>({s,m:metrics(s)})).filter(x=>x.m.ranked), H=S().hours, W=S().workerWord;
-  const comp = ms.reduce((a,x)=>a+x.m.completed,0), lab = ms.reduce((a,x)=>a+x.m.labor*(H[x.s.shift]||8),0);
-  const t = byType(list);
+  const ms = list.map(s=>({s,m:metrics(s)})).filter(x=>x.m.ranked), W=S().workerWord;
+  const comp = ms.reduce((a,x)=>a+x.m.completed,0);
+  const timed = ms.filter(x=>x.m.hours), compT = timed.reduce((a,x)=>a+x.m.completed,0), lab = timed.reduce((a,x)=>a+x.m.labor*x.m.hours,0);
+  const t = byType(list), used = Object.values(t).filter(v=>v.n || !v.info.orphan);
+  const noHours = Object.values(t).filter(v=>v.n && !v.hours).map(v=>v.info.name);
   const ranked = ms.filter(x=>x.m.lhpc).sort((a,b)=>a.m.lhpc-b.m.lhpc);
   const row = (x,i)=>`<tr class="click" data-open="${x.s.id}"><td><span class="rank ${i<3?"g":""}">${i+1}</span></td><td>${dayLbl(x.s.date)}</td><td>${tag(x.s.shift)}</td><td class="n">${x.m.completed}</td><td class="n">${x.m.labor}</td><td class="n"><b>${fmt(x.m.lhpc)}</b></td></tr>`;
   const head = `<tr><th></th><th>Day</th><th>Shift</th><th class="n">Done</th><th class="n">${esc(W)}</th><th class="n">Hrs/ctr</th></tr>`;
@@ -243,13 +318,13 @@ function viewDash(){
     <div class="kpi"><div class="v">${ms.length}</div><div class="l">Shifts with EOD</div></div>
     <div class="kpi"><div class="v">${comp}</div><div class="l">Containers done</div></div>
     <div class="kpi"><div class="v">${fmt(comp/(ms.length||1))}</div><div class="l">Per shift</div></div>
-    <div class="kpi"><div class="v">${fmt(comp?lab/comp:null)}</div><div class="l">Labor hrs / container</div></div>
+    <div class="kpi"><div class="v">${fmt(compT?lab/compT:null)}</div><div class="l">Labor hrs / container</div></div>
   </div>
   <div class="panel"><h2>Shift vs shift</h2><div class="scroll"><table>
       <tr><th>Shift</th><th class="n">Shifts</th><th class="n">Avg ${esc(W.toLowerCase())}</th><th class="n">Avg done</th><th class="n">Per ${esc(W.toLowerCase().replace(/s$/,""))}</th><th class="n">Labor hrs / ctr</th><th class="n">Left over</th></tr>
-      ${["1st","2nd","3rd"].map(sh=>{const v=t[sh]; return `<tr><td>${tag(sh)} <span class="muted">${H[sh]}h</span></td><td class="n">${v.n}</td><td class="n">${fmt(v.avgLab)}</td><td class="n">${fmt(v.avgComp)}</td><td class="n">${fmt(v.perWorker,2)}</td><td class="n"><b>${fmt(v.lhpc)}</b></td><td class="n">${v.carried}</td></tr>`;}).join("")}
+      ${used.map(v=>`<tr><td>${tag(v.info.id)} <span class="muted">${v.hours?fmt(v.hours)+"h":""}</span></td><td class="n">${v.n}</td><td class="n">${fmt(v.avgLab)}</td><td class="n">${fmt(v.avgComp)}</td><td class="n">${fmt(v.perWorker,2)}</td><td class="n"><b>${fmt(v.lhpc)}</b></td><td class="n">${v.carried}</td></tr>`).join("")}
     </table></div>
-    <div class="pb note" style="margin:0">Labor hrs / container = ${esc(W.toLowerCase())} × scheduled shift hours ÷ containers completed. Lower is faster.</div></div>
+    <div class="pb note" style="margin:0">Labor hrs / container = ${esc(W.toLowerCase())} × scheduled shift hours ÷ containers completed. Lower is faster.${noHours.length?` Add start and end times for ${noHours.map(esc).join(", ")} in Setup to see labor hours.`:""}</div></div>
   <div class="panel"><h2>Containers completed by week</h2><div class="pb">${weekChart()}</div></div>
   <div class="two">
     <div class="panel"><h2>Fastest shifts</h2><div class="scroll"><table>${head}${ranked.slice(0,5).map(row).join("")}</table></div></div>
@@ -258,22 +333,26 @@ function viewDash(){
   ${OPEN?`<div class="panel"><div class="pb">${detailHTML(OPEN)}</div></div>`:""}`;
 }
 function welcome(){
-  return `<div class="panel"><h2>Welcome</h2><div class="pb">
-    <p>Log each shift's start and end-of-day numbers, plus door-by-door work, and this board ranks shifts and people for you.</p>
-    <p class="muted">Everything stays in this browser on this device. Nothing is uploaded.</p>
-    <div class="row"><button class="pri" data-tab="log">Log a shift</button><button data-tab="data">Load a personal pack</button></div></div></div>`;
+  if (allShifts().length) return `<div class="panel"><h2>Nothing logged this week</h2><div class="pb">
+    <p>No shifts were logged for the week you picked. Choose <b>All weeks</b> at the top, or log a shift for this week.</p>
+    <div class="row"><button class="pri" data-tab="log">Log a shift</button></div></div></div>`;
+  return `<div class="panel"><h2>No shifts logged yet</h2><div class="pb intro">
+    <p>Your overview fills in once you log a shift. Paste a shift's start or end-of-day report on the <b>Log</b> page and the numbers are read for you.</p>
+    <p class="muted">Log doors too (door, pieces, who worked it, start and end) to rank your ${esc(S().workerWord.toLowerCase())} on the People page.</p>
+    <div class="row" style="margin-top:12px"><button class="pri" data-tab="log">Log a shift</button><button data-tab="data">Edit setup</button></div></div></div>`;
 }
 function weekChart(){
-  const list = allShifts(), weeks=[...new Set(list.map(s=>weekStart(s.date)))].sort();
-  const data = weeks.map(w=>{ const o={w}; for(const sh of ["1st","2nd","3rd"]) o[sh]=list.filter(s=>weekStart(s.date)===w&&s.shift===sh).reduce((a,s)=>a+(metrics(s).completed||0),0); return o; });
-  const max = Math.max(1,...data.map(d=>d["1st"]+d["2nd"]+d["3rd"]));
+  const list = allShifts(), weeks=[...new Set(list.map(s=>weekStart(s.date)))].sort(), shs=shiftsAll();
+  const data = weeks.map(w=>{ const o={w,tot:0}; for(const x of shs){ o[x.id]=list.filter(s=>weekStart(s.date)===w&&s.shift===x.id).reduce((a,s)=>a+(metrics(s).completed||0),0); o.tot+=o[x.id]; } return o; });
+  const max = Math.max(1,...data.map(d=>d.tot));
   const Wd=Math.max(300,weeks.length*64), H=170, bw=30, gap=(Wd-20)/Math.max(1,weeks.length);
   let g=`<line x1="0" x2="${Wd}" y1="${H-22}" y2="${H-22}" stroke="var(--line)"/>`;
   data.forEach((d,i)=>{ let y=H-22; const x=20+i*gap+(gap-bw)/2;
-    for(const sh of ["1st","2nd","3rd"]){ const h=d[sh]/max*(H-44); if(h>0){ y-=h; g+=`<rect x="${x}" y="${y}" width="${bw}" height="${h}" fill="var(--s${sh[0]})"><title>${sh}: ${d[sh]}</title></rect>`; } }
-    g+=`<text x="${x+bw/2}" y="${y-4}" text-anchor="middle" style="fill:var(--text);font-weight:700">${d["1st"]+d["2nd"]+d["3rd"]}</text><text x="${x+bw/2}" y="${H-7}" text-anchor="middle">${pd(d.w).toLocaleDateString(undefined,{month:"short",day:"numeric"})}</text>`;
+    shs.forEach((sh,j)=>{ const h=d[sh.id]/max*(H-44); if(h>0){ y-=h; g+=`<rect x="${x}" y="${y}" width="${bw}" height="${h}" fill="${PALETTE[j%PALETTE.length]}"><title>${esc(sh.name)}: ${d[sh.id]}</title></rect>`; } });
+    g+=`<text x="${x+bw/2}" y="${y-4}" text-anchor="middle" style="fill:var(--text);font-weight:700">${d.tot}</text><text x="${x+bw/2}" y="${H-7}" text-anchor="middle">${pd(d.w).toLocaleDateString(undefined,{month:"short",day:"numeric"})}</text>`;
   });
-  return `<div class="scroll"><svg width="${Wd}" height="${H}" viewBox="0 0 ${Wd} ${H}">${g}</svg></div><div class="bar-legend"><span><i style="background:var(--s1)"></i>1st</span><span><i style="background:var(--s2)"></i>2nd</span><span><i style="background:var(--s3)"></i>3rd</span><span>Weeks run Sun–Sat</span></div>`;
+  const legend = shs.filter(sh=>data.some(d=>d[sh.id])).map(sh=>`<span><i style="background:${shiftInfo(sh.id).color}"></i>${esc(sh.name)}</span>`).join("");
+  return `<div class="scroll"><svg width="${Wd}" height="${H}" viewBox="0 0 ${Wd} ${H}">${g}</svg></div><div class="bar-legend">${legend}<span>Weeks run Sun–Sat</span></div>`;
 }
 function viewShifts(){
   let list = allShifts().filter(s=>inRange(s.date)).map(s=>({s,m:metrics(s)}));
@@ -284,7 +363,7 @@ function viewShifts(){
   list.sort((a,b)=>{ const va=val(a), vb=val(b); if(va==null&&vb==null) return 0; if(va==null) return 1; if(vb==null) return -1; return (va<vb?-1:va>vb?1:0)*SORT.dir; });
   const th=(k,l,n)=>`<th class="${n?"n":""}" data-sort="${k}">${l}${SORT.k===k?(SORT.dir>0?" ▲":" ▼"):""}</th>`;
   return `<div class="panel"><h2>All shifts <small>tap a header to sort · tap a row for details</small></h2>
-    <div class="pb" style="padding-bottom:0"><div class="row">${["all","1st","2nd","3rd"].map(x=>`<button class="sm ${SHIFTF===x?"on":""}" data-shiftf="${x}">${x==="all"?"All":x}</button>`).join("")}</div></div>
+    <div class="pb" style="padding-bottom:0"><div class="row">${[{id:"all",name:"All"}].concat(shiftsAll()).map(x=>`<button class="sm ${SHIFTF===x.id?"on":""}" data-shiftf="${esc(x.id)}">${esc(x.name)}</button>`).join("")}</div></div>
     <div class="scroll" style="margin-top:10px"><table>
     <tr>${th("rank","#")}${th("date","Day")}<th>Shift</th>${th("completed","Done",1)}${th("carried","Left",1)}${th("labor",esc(S().workerWord),1)}${th("perWorker","Per head",1)}${th("lhpc","Hrs / ctr",1)}${th("support",esc(S().supportLabel),1)}${th("pieces","Pieces",1)}</tr>
     ${list.map(x=>{ const r=rankedIds.indexOf(x.s.id)+1; return `<tr class="click" data-open="${x.s.id}">
@@ -298,7 +377,7 @@ function viewShifts(){
 function detailHTML(id){
   const s = allShifts().find(x=>x.id===id); if(!s) return "";
   const cons = DB.containers.filter(c=>c.date===s.date&&c.shift===s.shift);
-  return `<div class="detail"><div class="row" style="justify-content:space-between"><b>${dayLbl(s.date)} · ${s.shift} shift</b>
+  return `<div class="detail"><div class="row" style="justify-content:space-between"><b>${dayLbl(s.date)} · ${esc(shiftName(s.shift))}</b>
       <span class="row"><button class="sm" data-edit="${s.id}">Edit</button><button class="sm ghost" data-close>Close</button></span></div>
     <div class="muted" style="margin:6px 0">Start: ${fields2txt(s.start)||"—"}<br>EOD: ${fields2txt(s.eod)||"—"}</div>
     ${cons.length?`<div><b>Doors:</b> ${cons.map(c=>`${esc(c.door)} (${(c.crew||[]).map(esc).join(", ")||"no names"})${c.pieces?` ${(+c.pieces).toLocaleString()} pcs`:""}`).join(" · ")}</div>`:""}
@@ -337,18 +416,30 @@ function viewWorkers(){
 
 /* ---------- log ---------- */
 function shiftGuess(){
-  const now=new Date(), d=new Date(now), h=now.getHours(), wd=now.getDay();
-  if (h<4){ d.setDate(d.getDate()-1); return {date:iso(d), shift:"2nd"}; }
-  if (wd===5||wd===6||wd===0) return {date:iso(d), shift:"3rd"};
-  return {date:iso(d), shift: h>=16?"2nd":"1st"};
+  /* the shift happening now, or the one that ended most recently (within 12 hours), from the schedules in Setup */
+  const now=new Date(), list=S().shifts; let best=null;
+  for (const back of [0,1]){
+    const d=new Date(now.getFullYear(), now.getMonth(), now.getDate()-back);
+    for (const sh of list){
+      if (!sh.start || !sh.end || (sh.days.length && !sh.days.includes(d.getDay()))) continue;
+      const st=new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, mins(sh.start)), en=new Date(st.getTime()+(durH(sh.start,sh.end)||0)*3600000);
+      if (st<=now && now<en) return {date:iso(d), shift:sh.id};
+      if (en<=now && now-en<12*3600000 && (!best || now-en<best.gap)) best={gap:now-en, date:iso(d), shift:sh.id};
+    }
+  }
+  if (best) return best;
+  const today=list.find(sh=>sh.days.includes(now.getDay())) || list[0];
+  return {date:iso(now), shift:today?today.id:""};
 }
-function crewList(){ return [...new Set((S().crew||[]).concat(DB.containers.flatMap(c=>c.crew||[])))].sort(); }
-const shiftSel = (id,v)=>`<select id="${id}">${["1st","2nd","3rd"].map(s=>`<option ${s===v?"selected":""}>${s}</option>`).join("")}</select>`;
+function crewList(){ return [...new Set(S().crew.map(c=>c.name).concat(DB.containers.flatMap(c=>c.crew||[])))].sort((a,b)=>a.localeCompare(b)); }
+const shiftSel = (id,v)=>{ const all=shiftsAll(); return all.length
+  ? `<select id="${id}">${all.map(x=>`<option value="${esc(x.id)}" ${x.id===v?"selected":""}>${esc(x.name)}</option>`).join("")}</select>`
+  : `<select id="${id}" disabled><option value="">Add a shift in Setup</option></select>`; };
 function viewLog(){
   const g = shiftGuess(), recent = DB.containers.slice(-8).reverse();
   return `
   <div class="panel"><h2>Paste a report <small>start or EOD</small></h2><div class="pb">
-    <textarea id="pasteTxt" placeholder="3rd Shift EOD&#10;14 workers&#10;5 containers completed&#10;1 rollover"></textarea>
+    <textarea id="pasteTxt" placeholder="${esc((S().shifts[0]||{name:"Night shift"}).name)} EOD&#10;14 workers&#10;5 containers completed&#10;1 rollover"></textarea>
     <div class="grid2">
       <div><label>Shift date</label><input type="date" id="pDate" value="${g.date}"></div>
       <div><label>Shift</label>${shiftSel("pShift",g.shift)}</div>
@@ -381,25 +472,34 @@ function viewLog(){
     ${recent.map(c=>`<tr><td>${dayLbl(c.date)}</td><td>${tag(c.shift)}</td><td>${esc(c.door)}</td><td class="n">${c.pieces?(+c.pieces).toLocaleString():"–"}</td><td>${(c.crew||[]).map(esc).join(", ")}</td><td class="n">${durH(c.start,c.end)!=null?fmt(durH(c.start,c.end))+"h":"–"}</td><td><button class="sm ghost" data-delc="${c.id}" aria-label="Delete">✕</button></td></tr>`).join("")}</table></div>`:`<div class="empty">No doors logged yet.</div>`}
   </div>`;
 }
-function wireLog(){
-  $("#pasteTxt").addEventListener("input",()=>{ const t=$("#pasteTxt").value.trim(), pv=$("#pPreview"); if(!t){pv.style.display="none";return;}
-    const r=parseReport(t); if(r.shift) $("#pShift").value=r.shift; $("#pKind").value=r.kind;
-    pv.style.display="block"; pv.innerHTML=`<b>Read as:</b> ${r.kind.toUpperCase()} · ${$("#pShift").value} shift<br>${fields2txt(r.fields)||"<span class='bad'>No numbers found.</span>"}`; });
+function updatePreview(auto){
+  const ta=$("#pasteTxt"), pv=$("#pPreview"); if(!ta||!pv) return;
+  const t=ta.value.trim(); if(!t){ pv.style.display="none"; return; }
+  const r=parseReport(t);
+  if (auto){ if(r.shift && [...$("#pShift").options].some(o=>o.value===r.shift)) $("#pShift").value=r.shift; $("#pKind").value=r.kind; DRAFT.f.pShift=$("#pShift").value; DRAFT.f.pKind=$("#pKind").value; }
+  pv.style.display="block";
+  pv.innerHTML=`<b>Read as:</b> ${$("#pKind").value==="eod"?"EOD":"Start"} · ${esc(shiftName($("#pShift").value))}<br>${fields2txt(r.fields)||"<span class='bad'>No numbers found.</span>"}`;
 }
+function clearDraft(ids){ ids.forEach(k=>delete DRAFT.f[k]); saveDraft(); }
 function savePaste(){
   const t=$("#pasteTxt").value.trim(); if(!t){toast("Paste a report first");return;}
   const r=parseReport(t), date=$("#pDate").value, sh=$("#pShift").value, kind=$("#pKind").value, id=date+"_"+sh;
+  if(!sh){ toast("Add a shift in Setup first"); return; }
   const s = JSON.parse(JSON.stringify(allShifts().find(x=>x.id===id) || {id,date,shift:sh,start:{},eod:{},reports:[]}));
   s[kind] = Object.assign({}, s[kind], r.fields);
   s.reports = (s.reports||[]).concat([{who:"Me",at:new Date().toISOString().slice(0,16),kind:kind==="eod"?"EOD":"Start",text:t}]);
   delete s.edited; DB.shifts[id]=s; DB.deleted=DB.deleted.filter(x=>x!==id); save();
-  toast("Saved "+sh+" shift "+(kind==="eod"?"EOD":"start")); renderRange(); render();
+  clearDraft(["pasteTxt","pDate","pShift","pKind"]);
+  toast("Saved "+shiftName(sh)+" "+(kind==="eod"?"EOD":"start")); renderRange(); render();
 }
 function saveDoor(){
   const c={id:uid(), date:$("#cDate").value, shift:$("#cShift").value, door:$("#cDoor").value.trim(), trailer:$("#cTrailer").value.trim(),
     pieces:$("#cPieces").value.replace(/\D/g,""), status:$("#cStatus").value, start:$("#cStart").value, end:$("#cEnd").value, crew:[...PICK], notes:$("#cNotes").value.trim()};
+  if(!c.shift){toast("Add a shift in Setup first");return;}
   if(!c.door){toast("Add a door number");return;}
-  DB.containers.push(c); save(); PICK=new Set(); toast("Door "+c.door+" saved"); renderRange(); render();
+  DB.containers.push(c); save(); PICK=new Set(); DRAFT.pick=[];
+  clearDraft(["cDate","cShift","cDoor","cTrailer","cPieces","cStatus","cStart","cEnd","cNotes"]);
+  toast("Door "+c.door+" saved"); renderRange(); render();
 }
 
 /* ---------- edit ---------- */
@@ -407,7 +507,7 @@ function editShift(id){
   const s = allShifts().find(x=>x.id===id); if(!s) return; const L=lbl();
   const F=["lumpers","lumpersOther","containers","completed","carried","osEpj","yard","shipping"];
   const box = part => F.map(k=>`<div><label>${esc(L[k])}</label><input data-ef="${part}.${k}" inputmode="numeric" value="${s[part]?.[k]??""}"></div>`).join("");
-  $("#main").innerHTML = `<div class="panel"><h2>Edit ${dayLbl(s.date)} · ${s.shift} shift</h2><div class="pb">
+  $("#main").innerHTML = `<div class="panel"><h2>Edit ${dayLbl(s.date)} · ${esc(shiftName(s.shift))}</h2><div class="pb">
     <b>Start</b><div class="grid2">${box("start")}</div><br><b>EOD</b><div class="grid2">${box("eod")}</div>
     <label>Note</label><textarea id="eNote" style="min-height:70px">${esc(s.notes||"")}</textarea>
     <div class="row" style="margin-top:12px"><button class="pri" data-esave="${id}">Save</button><button class="sm ghost" data-cancel>Cancel</button><span style="flex:1"></span><button class="sm" data-del="${id}">Delete shift</button></div></div></div>`;
@@ -419,32 +519,86 @@ function saveEdit(id){
 }
 
 /* ---------- setup & backup ---------- */
+function snapshot(){ const s=S(), raw=DB.settings||{}; return {title:raw.title||"", workerWord:s.workerWord, supportLabel:s.supportLabel, shifts:s.shifts.map(x=>Object.assign({},x,{days:x.days.slice()})), crew:s.crew.map(c=>Object.assign({},c))}; }
+function setupDraft(){ if(!DRAFT.setup) DRAFT.setup = snapshot(); return DRAFT.setup; }
+const setupDirty = () => !!DRAFT.setup && JSON.stringify(DRAFT.setup)!==JSON.stringify(snapshot());
+function shiftTotal(x){
+  const h = x.start && x.end ? durH(x.start,x.end) : null, n = x.days.length, dd = n ? `${n} day${n>1?"s":""} a week` : "";
+  if (h) return `<b>${fmt(h,2)} hrs</b> per shift${n?` · ${dd} · <b>${fmt(h*n,2)} hrs</b> a week`:""}`;
+  if (x.hours) return `Counting <b>${fmt(x.hours,2)} hrs</b> per shift until you add start and end times`;
+  return n ? `${dd} · add start and end times to see the hours` : "Days and times are optional";
+}
+function shiftCard(x,i){
+  return `<div class="shcard">
+    <div class="hd"><div><label for="shn${i}">What shift is this?</label><input id="shn${i}" data-sh="${i}" data-k="name" value="${esc(x.name)}" placeholder="e.g. 1st shift, Night shift" autocomplete="off"></div>
+      <button class="x" data-shrm="${i}" aria-label="Remove this shift" style="margin-bottom:4px">✕</button></div>
+    <label>Days</label><div class="days">${DAYS.map((d,j)=>`<button data-day="${i}:${j}" class="${x.days.includes(j)?"on":""}" aria-pressed="${x.days.includes(j)}">${d}</button>`).join("")}</div>
+    <div class="grid2"><div><label for="shs${i}">Starts</label><input type="time" id="shs${i}" data-sh="${i}" data-k="start" value="${esc(x.start)}"></div>
+      <div><label for="she${i}">Ends</label><input type="time" id="she${i}" data-sh="${i}" data-k="end" value="${esc(x.end)}"></div></div>
+    <div class="tot" id="shtot${i}">${shiftTotal(x)}</div></div>`;
+}
 function viewData(){
-  const s=S();
-  return `<div class="panel"><h2>Setup</h2><div class="pb">
-    <div class="grid2">
-      <div><label>Board name</label><input id="sTitle" value="${esc(s.title)}"></div>
-      <div><label>What you call workers</label><input id="sWorker" value="${esc(s.workerWord)}"></div>
-      <div><label>Support team label</label><input id="sSupport" value="${esc(s.supportLabel)}"></div>
-      <div><label>1st shift hours</label><input id="sH1" inputmode="decimal" value="${s.hours["1st"]}"></div>
-      <div><label>2nd shift hours</label><input id="sH2" inputmode="decimal" value="${s.hours["2nd"]}"></div>
-      <div><label>3rd shift hours</label><input id="sH3" inputmode="decimal" value="${s.hours["3rd"]}"></div>
-    </div>
-    <label>Crew names (one per line)</label><textarea id="sCrew" style="min-height:90px">${esc((s.crew||[]).join("\n"))}</textarea>
-    <div class="row" style="margin-top:12px"><button class="pri" id="sSave">Save setup</button></div>
+  const s=S(), d=DRAFT.setup||snapshot(), first=isBlank(), dirty=setupDirty();
+  const named = d.shifts.filter(x=>x.name.trim());
+  const crewOpts = sel => `<option value="">Any shift</option>`+named.map(x=>`<option value="${esc(x.id)}" ${x.id===sel?"selected":""}>${esc(x.name)}</option>`).join("");
+  const clearBox = CLEARING ? `<div class="confirm"><p><b>Clear all shift data?</b> This deletes every logged shift, report and door on this device. It can't be undone.</p>
+      <p class="muted">Save a backup first so you can bring it all back if you need to.</p>
+      <label class="check"><input type="checkbox" id="clrSetup"> Also clear my setup (name, shifts and crew)</label>
+      <div class="row"><button class="pri" id="clrBackup">Save a backup first</button><button class="danger" id="clrGo">Clear all shift data</button><button class="sm ghost" id="clrCancel">Cancel</button></div></div>`
+    : `<div class="row" style="margin-top:12px"><button class="sm ghost" id="bReset">Clear all shift data…</button></div>`;
+  return `${first?`<div class="panel"><h2>Welcome</h2><div class="pb intro">
+      <p><b>Let's set up your board.</b> Add your warehouse or agency, the shifts you run, and your crew. You can change any of this later.</p>
+      <p class="muted">Everything stays in this browser on this device. Nothing is uploaded. Moving over from another phone? Load your backup at the bottom of this page.</p></div></div>`:""}
+  <div class="panel"><h2>Setup</h2><div class="pb"><div class="grid2">
+      <div><label for="sTitle">Name of warehouse/agency</label><input id="sTitle" data-sf="title" value="${esc(d.title)}" placeholder="e.g. Westside DC" autocomplete="off"></div>
+      <div><label for="sWorker">Worker title</label><input id="sWorker" data-sf="workerWord" value="${esc(d.workerWord)}" placeholder="e.g. Lumpers" autocomplete="off"></div>
+      <div><label for="sSupport">Support team label</label><input id="sSupport" data-sf="supportLabel" value="${esc(d.supportLabel)}" autocomplete="off"></div>
+  </div></div></div>
+  <div class="panel"><h2>Shift schedules ${d.shifts.length?`<small>${d.shifts.length} added</small>`:""}</h2><div class="pb">
+    ${d.shifts.length?"":`<p class="muted" style="margin:0">Add each shift you run. Only the name is required.</p>`}
+    ${d.shifts.map(shiftCard).join("")}
+    <div class="row" style="margin-top:12px"><button id="shAdd">+ Add shift schedule</button></div>
   </div></div>
-  <div class="panel"><h2>Backup & personal pack</h2><div class="pb">
-    <p>Everything is stored <b>only in this browser on this device</b>. Save a backup now and then. Load a backup or personal pack to bring your setup and history onto another device.</p>
+  <div class="panel"><h2>Crew ${d.crew.length?`<small>${d.crew.length} ${d.crew.length===1?"person":"people"}</small>`:""}</h2><div class="pb">
+    <div class="row"><input id="crewNew" placeholder="Type a name, then Add" style="flex:1;min-width:140px" autocomplete="off" enterkeyhint="done" value="${esc(DRAFT.crewNew||"")}"><button id="crewAdd">Add</button></div>
+    ${d.crew.length?`<ul class="crew">${d.crew.map((c,i)=>`<li><span>${esc(c.name)}</span>${named.length?`<select data-crewsh="${i}" aria-label="Shift for ${esc(c.name)}">${crewOpts(c.shift)}</select>`:""}<button class="x" data-crewrm="${i}" aria-label="Remove ${esc(c.name)}">✕</button></li>`).join("")}</ul>`
+      :`<p class="note">Each name you add lands in this list. You can put someone on a shift or leave them on any shift.</p>`}
+  </div></div>
+  <div class="panel"><div class="pb row" style="justify-content:space-between">
+    <span class="${dirty?"dirty":"muted"}" style="font-size:12px">${dirty?"Unsaved changes":first?"":"All changes saved"}</span>
+    <span class="row">${dirty&&!first?`<button class="sm ghost" id="sDiscard">Discard</button>`:""}<button class="pri" id="sSave">${first?"Save and start":"Save setup"}</button></span></div></div>
+  <div class="panel"><h2>Backup</h2><div class="pb">
+    <p>Everything is stored <b>only in this browser on this device</b>. Save a backup now and then, and use it to move your setup and history to another device.</p>
     <div class="row"><button class="pri" id="bExport">Save backup</button><label class="chip" style="margin:0;text-transform:none;letter-spacing:0;font-size:13px;color:var(--text)">Load backup / pack<input type="file" id="bImport" accept=".json,application/json" style="display:none"></label><button class="sm" id="bCopy">Copy week summary</button></div>
     <p class="note">On this device: ${(DB.base||[]).length} shifts from a pack · ${Object.keys(DB.shifts).length} added or edited · ${DB.containers.length} doors.${s.source?" Pack: "+esc(s.source):""}</p>
-    <div class="row" style="margin-top:12px"><button class="sm ghost" id="bReset">Erase everything on this device…</button></div>
+    ${clearBox}
   </div></div>`;
 }
 function saveSetup(){
-  const n=v=>{ const x=parseFloat(v); return isFinite(x)&&x>0?x:8; };
-  DB.settings = Object.assign({}, DB.settings, {title:$("#sTitle").value.trim()||"Shift Board", workerWord:$("#sWorker").value.trim()||"Workers", supportLabel:$("#sSupport").value.trim()||"Support",
-    hours:{"1st":n($("#sH1").value),"2nd":n($("#sH2").value),"3rd":n($("#sH3").value)}, crew:$("#sCrew").value.split(/\n/).map(x=>x.trim()).filter(Boolean)});
-  save(); toast("Setup saved"); render();
+  const d = DRAFT.setup || snapshot();
+  const shifts = d.shifts.filter(x=>x.name.trim() || x.days.length || x.start || x.end);
+  if (shifts.some(x=>!x.name.trim())){ toast("Give every shift a name"); return; }
+  const names = shifts.map(x=>x.name.trim().toLowerCase());
+  if (new Set(names).size!==names.length){ toast("Two shifts have the same name"); return; }
+  const first = isBlank(), ids = new Set(shifts.map(x=>x.id));
+  const st = Object.assign({}, DB.settings, {title:d.title.trim(), workerWord:d.workerWord.trim()||"Workers", supportLabel:d.supportLabel.trim()||"Support",
+    shifts: shifts.map(x=>({id:x.id, name:x.name.trim(), days:x.days.slice().sort((a,b)=>a-b), start:x.start, end:x.end, hours:x.start&&x.end?null:x.hours})),
+    crew: d.crew.map(c=>({name:c.name, shift:ids.has(c.shift)?c.shift:""}))});
+  delete st.hours;
+  DB.settings = st; save(); delete DRAFT.setup; saveDraft(); renderRange();
+  if (first){ toast("Setup saved. Log your first shift."); go("log"); } else { toast("Setup saved"); render(); }
+}
+function crewAdd(){
+  const inp=$("#crewNew"), n=inp.value.trim().replace(/\s+/g," "); if(!n){ inp.focus(); return; }
+  const d=setupDraft();
+  if (d.crew.some(c=>c.name.toLowerCase()===n.toLowerCase())){ toast(n+" is already on the list"); inp.select(); return; }
+  d.crew.push({name:n, shift:""}); DRAFT.crewNew=""; saveDraft(); render(); $("#crewNew").focus();
+}
+function clearAll(){
+  const keep = !$("#clrSetup").checked;
+  DB = {settings: keep?DB.settings:{}, base:[], shifts:{}, deleted:[], containers:[], theme:DB.theme};
+  DRAFT = {f:{}, scroll:{}}; PICK = new Set(); CLEARING = false; OPEN = null;
+  save(); saveDraft(); renderRange(); toast(keep?"Shift data cleared":"Everything cleared"); TAB="data"; render(); window.scrollTo(0,0);
 }
 function exportData(){
   const blob=new Blob([JSON.stringify({app:"shiftboard",v:1,saved:new Date().toISOString(),settings:DB.settings,base:DB.base,shifts:DB.shifts,deleted:DB.deleted,containers:DB.containers},null,1)],{type:"application/json"});
@@ -456,20 +610,20 @@ function importData(file){
     if (Array.isArray(d.base)) { const m={}; for(const s of (DB.base||[]).concat(d.base)) m[s.id]=s; DB.base=Object.values(m); }
     DB.shifts=Object.assign(DB.shifts, d.shifts||{}); DB.deleted=[...new Set(DB.deleted.concat(d.deleted||[]))];
     const have=new Set(DB.containers.map(c=>c.id)); DB.containers=DB.containers.concat((d.containers||[]).filter(c=>!have.has(c.id)));
-    save(); renderRange(); render(); toast("Loaded");
+    delete DRAFT.setup; saveDraft(); save(); renderRange(); toast("Loaded"); if(TAB==="data" && allShifts().length) go("dash"); else render();
   }catch(e){ toast("That file isn't a Shift Board backup or pack"); } }; r.readAsText(file);
 }
 function weekSummary(){
   const w = $("#range").value==="all" ? weekStart(iso(new Date())) : $("#range").value, t=byType(allShifts().filter(s=>weekStart(s.date)===w)), W=S().workerWord.toLowerCase();
   let out=`${S().title} — week of ${wkLbl(w)}\n`;
-  for (const sh of ["1st","2nd","3rd"]) if(t[sh].n) out+=`${sh}: ${t[sh].n} shifts, ${t[sh].comp} containers, ${fmt(t[sh].perWorker,2)} per ${W.replace(/s$/,"")}, ${fmt(t[sh].lhpc)} labor hrs/container\n`;
+  for (const v of Object.values(t)) if(v.n) out+=`${v.info.name}: ${v.n} shifts, ${v.comp} containers, ${fmt(v.perWorker,2)} per ${W.replace(/s$/,"")}, ${fmt(v.lhpc)} labor hrs/container\n`;
   return out;
 }
 
 /* ---------------- events ---------------- */
 document.addEventListener("click", e=>{
   const t=e.target.closest("button,[data-open],[data-sort],[data-chip]"); if(!t) return;
-  if (t.dataset.tab){ TAB=t.dataset.tab; OPEN=null; SORT = TAB==="workers"?{k:"pieces",dir:-1}:TAB==="shifts"?{k:"date",dir:-1}:SORT; render(); return; }
+  if (t.dataset.tab){ go(t.dataset.tab); return; }
   if (t.dataset.sort){ const k=t.dataset.sort; SORT = SORT.k===k?{k,dir:-SORT.dir}:{k,dir:(k==="lhpc"||k==="rank"||k==="hpc")?1:-1}; render(); return; }
   if (t.dataset.shiftf){ SHIFTF=t.dataset.shiftf; render(); return; }
   if (t.dataset.open){ OPEN = OPEN===t.dataset.open?null:t.dataset.open; render(); return; }
@@ -479,25 +633,60 @@ document.addEventListener("click", e=>{
   if (t.hasAttribute("data-cancel")){ render(); return; }
   if (t.dataset.del){ if(confirm("Delete this shift?")){ DB.deleted.push(t.dataset.del); delete DB.shifts[t.dataset.del]; save(); OPEN=null; renderRange(); render(); } return; }
   if (t.dataset.delc){ DB.containers=DB.containers.filter(c=>c.id!==t.dataset.delc); save(); render(); return; }
-  if (t.dataset.chip!=null){ const n=t.dataset.chip; PICK.has(n)?PICK.delete(n):PICK.add(n); t.classList.toggle("on"); return; }
+  if (t.dataset.chip!=null){ const n=t.dataset.chip; PICK.has(n)?PICK.delete(n):PICK.add(n); t.classList.toggle("on"); DRAFT.pick=[...PICK]; saveDraft(); return; }
+  /* setup editor */
+  if (t.dataset.day){ const [i,j]=t.dataset.day.split(":").map(Number), x=setupDraft().shifts[i]; x.days = x.days.includes(j) ? x.days.filter(v=>v!==j) : x.days.concat(j).sort((a,b)=>a-b); saveDraft(); render(); return; }
+  if (t.dataset.shrm){ const d=setupDraft(), x=d.shifts[+t.dataset.shrm];
+    const used = allShifts().some(s=>s.shift===x.id) || DB.containers.some(c=>c.shift===x.id);
+    if (used && !confirm(`Remove ${x.name||"this shift"} from your schedules? Shifts already logged under it keep their numbers.`)) return;
+    d.shifts.splice(+t.dataset.shrm,1); d.crew.forEach(c=>{ if(c.shift===x.id) c.shift=""; }); saveDraft(); render(); return; }
+  if (t.dataset.crewrm){ setupDraft().crew.splice(+t.dataset.crewrm,1); saveDraft(); render(); return; }
   switch(t.id){
     case "pSave": savePaste(); break;
     case "cSave": saveDoor(); break;
-    case "addName": { const n=$("#newName").value.trim(); if(n){ DB.settings=Object.assign({},DB.settings,{crew:[...new Set((S().crew||[]).concat(n))]}); PICK.add(n); save();
-      const keep={}; ["cDate","cShift","cDoor","cTrailer","cPieces","cStatus","cStart","cEnd","cNotes","pasteTxt","pDate","pShift","pKind"].forEach(k=>keep[k]=$("#"+k).value); render(); Object.entries(keep).forEach(([k,v])=>$("#"+k).value=v); } break; }
-    case "nowStart": $("#cStart").value=new Date().toTimeString().slice(0,5); break;
-    case "nowEnd": $("#cEnd").value=new Date().toTimeString().slice(0,5); break;
+    case "addName": { const n=$("#newName").value.trim().replace(/\s+/g," "); if(!n){ $("#newName").focus(); break; }
+      if (!S().crew.some(c=>c.name.toLowerCase()===n.toLowerCase())){ DB.settings=Object.assign({},DB.settings,{crew:S().crew.concat({name:n,shift:""})}); save(); if(DRAFT.setup) DRAFT.setup.crew.push({name:n,shift:""}); }
+      PICK.add(crewList().find(x=>x.toLowerCase()===n.toLowerCase())||n); DRAFT.pick=[...PICK]; delete DRAFT.f.newName; saveDraft(); render(); break; }
+    case "nowStart": $("#cStart").value=DRAFT.f.cStart=new Date().toTimeString().slice(0,5); saveDraft(); break;
+    case "nowEnd": $("#cEnd").value=DRAFT.f.cEnd=new Date().toTimeString().slice(0,5); saveDraft(); break;
+    case "shAdd": { const d=setupDraft(); d.shifts.push({id:uid(), name:"", days:[], start:"", end:"", hours:null}); saveDraft(); render(); const el=$("#shn"+(d.shifts.length-1)); if(el){ el.focus(); el.scrollIntoView({block:"center"}); } break; }
+    case "crewAdd": crewAdd(); break;
     case "sSave": saveSetup(); break;
-    case "bExport": exportData(); break;
+    case "sDiscard": delete DRAFT.setup; saveDraft(); render(); toast("Changes discarded"); break;
+    case "bExport": case "clrBackup": exportData(); break;
     case "bCopy": { const s=weekSummary(); (navigator.clipboard?navigator.clipboard.writeText(s):Promise.reject()).then(()=>toast("Copied"),()=>prompt("Copy this:",s)); break; }
-    case "bReset": if(confirm("Erase all shifts, doors and setup on this device? Save a backup first if you need it.")){ DB={settings:{},base:[],shifts:{},deleted:[],containers:[],theme:DB.theme}; save(); renderRange(); render(); } break;
+    case "bReset": CLEARING=true; render(); $(".confirm").scrollIntoView({block:"center"}); break;
+    case "clrCancel": CLEARING=false; render(); break;
+    case "clrGo": clearAll(); break;
     case "themeBtn": { const cur=document.documentElement.dataset.theme, nxt=cur==="dark"?"light":cur==="light"?"":"dark"; if(nxt) document.documentElement.dataset.theme=nxt; else delete document.documentElement.dataset.theme; DB.theme=nxt||null; save(); break; }
   }
 });
-document.addEventListener("change", e=>{ if(e.target.id==="range"){ OPEN=null; render(); } if(e.target.id==="bImport"&&e.target.files[0]) importData(e.target.files[0]); });
+function onField(e){
+  const el=e.target;
+  if (DRAFT_FIELDS.includes(el.id)){ DRAFT.f[el.id]=el.value; saveDraft(); if(el.id==="pasteTxt") updatePreview(true); else if(el.id==="pShift"||el.id==="pKind") updatePreview(false); return; }
+  if (el.dataset.sf){ setupDraft()[el.dataset.sf]=el.value; saveDraft(); return; }
+  if (el.dataset.sh){ const x=setupDraft().shifts[+el.dataset.sh]; x[el.dataset.k]=el.value; saveDraft(); const tot=$("#shtot"+el.dataset.sh); if(tot) tot.innerHTML=shiftTotal(x); return; }
+  if (el.dataset.crewsh){ setupDraft().crew[+el.dataset.crewsh].shift=el.value; saveDraft(); return; }
+  if (el.id==="crewNew"){ DRAFT.crewNew=el.value; saveDraft(); }
+}
+document.addEventListener("input", onField);
+document.addEventListener("change", e=>{
+  if (e.target.id==="range"){ OPEN=null; render(); return; }
+  if (e.target.id==="bImport" && e.target.files[0]){ importData(e.target.files[0]); return; }
+  if (e.target.tagName==="SELECT") onField(e);
+});
+document.addEventListener("keydown", e=>{
+  if (e.key!=="Enter") return;
+  if (e.target.id==="crewNew"){ e.preventDefault(); crewAdd(); }
+  else if (e.target.id==="newName"){ e.preventDefault(); $("#addName").click(); }
+});
+let scrollT=0;
+window.addEventListener("scroll", ()=>{ clearTimeout(scrollT); scrollT=setTimeout(()=>{ DRAFT.scroll[TAB]=window.scrollY; saveDraft(); },250); }, {passive:true});
 
+/* start: a brand-new browser opens Setup; otherwise every refresh opens the Overview */
 if (DB.theme) document.documentElement.dataset.theme = DB.theme;
-renderRange(); render();
+TAB = isBlank() ? "data" : "dash";
+renderRange(); render(); window.scrollTo(0, DRAFT.scroll[TAB]||0);
 </script>
 </body>
 </html>

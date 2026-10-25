@@ -10,7 +10,7 @@ A simple, private shift logger for warehouse crews. Log each shift's start and e
 - **Shifts:** every logged shift, sortable and ranked. Tap a shift to see its reports and edit numbers.
 - **People:** rankings built from door logs: pieces credited, pieces per hour, containers credited, person-hours per container.
 - **Log:** paste a start or end-of-day report and the numbers are read for you, or log a single door (door, piece count, crew, start and end time).
-- **Setup:** board name, shift lengths, labels, and crew list, plus backup and restore.
+- **Setup:** opens first on a new device. Your warehouse or agency name, worker title, your own shift schedules (name, days, start and end times), and your crew, plus backup and restore.
 
 ## Privacy
 
@@ -19,4 +19,4 @@ There is no backend and no account. Everything is saved only in the browser on y
 ## How credit is split
 
 - Each door's credit is split evenly across the crew on it. A rolled-over door counts as half.
-- Labor hours per container = workers × scheduled shift hours ÷ containers completed.
+- Labor hours per container = workers × scheduled shift hours ÷ containers completed. Shift hours come from each shift's start and end times in Setup.
