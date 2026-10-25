@@ -1,0 +1,503 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0d0f12">
+<title>Shift Board</title>
+<style>
+:root{
+  --bg:#0d0f12; --panel:#14171c; --panel2:#1b1f26; --line:#262b34; --text:#e6e8ec; --muted:#8b93a1;
+  --accent:#f0a83a; --on-accent:#141414; --good:#43b883; --bad:#e5645f;
+  --s1:#4f9cf7; --s2:#a07cf0; --s3:#f0a83a;
+  --r:3px;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){--bg:#f3f4f6; --panel:#ffffff; --panel2:#f1f2f4; --line:#dfe2e7; --text:#15181d; --muted:#5c6573; --accent:#c87a0c; --on-accent:#fff; --good:#1e9461; --bad:#c93d3d; --s1:#2d78d6; --s2:#7550cf; --s3:#c87a0c;}
+}
+:root[data-theme="light"]{--bg:#f3f4f6; --panel:#ffffff; --panel2:#f1f2f4; --line:#dfe2e7; --text:#15181d; --muted:#5c6573; --accent:#c87a0c; --on-accent:#fff; --good:#1e9461; --bad:#c93d3d; --s1:#2d78d6; --s2:#7550cf; --s3:#c87a0c;}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;-webkit-text-size-adjust:100%}
+body{padding-bottom:40px}
+header{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+.top{display:flex;align-items:center;gap:8px;padding:12px 16px 8px;max-width:1100px;margin:0 auto}
+.top h1{font-size:15px;margin:0;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;font-weight:700}
+.top h1 b{color:var(--accent);font-weight:700}
+.top .sp{flex:1}
+nav{display:flex;gap:0;padding:0 8px;max-width:1100px;margin:0 auto;overflow-x:auto;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+nav button{flex:0 0 auto;background:none;border:0;border-bottom:2px solid transparent;border-radius:0;padding:8px 10px 9px;color:var(--muted);font-weight:600;font-size:13px;letter-spacing:.02em}
+nav button.on{background:none;color:var(--text);border-color:transparent;border-bottom-color:var(--accent)}
+button,select,input,textarea{font:inherit;color:inherit}
+button{background:var(--panel2);border:1px solid var(--line);border-radius:var(--r);padding:6px 12px;cursor:pointer}
+button:hover{border-color:var(--muted)}
+button.on{background:var(--text);color:var(--bg);border-color:var(--text)}
+button.pri{background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:600}
+button.ghost{background:transparent}
+button.sm{padding:4px 9px;font-size:12px}
+#range{width:auto;max-width:44vw;min-width:0;padding:5px 8px;font-size:12px}
+main{max-width:1100px;margin:0 auto;padding:14px 16px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);margin-bottom:12px}
+.panel>h2{font-size:11px;margin:0;padding:10px 14px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line);display:flex;gap:8px;align-items:baseline}
+.panel>h2 small{text-transform:none;letter-spacing:0;font-weight:400}
+.pb{padding:12px 14px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.muted{color:var(--muted)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r);margin-bottom:12px;overflow:hidden}
+.kpi{background:var(--panel);padding:12px 14px}
+.kpi .v{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.kpi .l{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em;margin-top:2px}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th,td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+tr:last-child td{border-bottom:0}
+th{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em;cursor:pointer;user-select:none;background:var(--panel2)}
+td.n,th.n{text-align:right}
+tr.click{cursor:pointer}
+tr.click:hover td{background:var(--panel2)}
+.scroll{overflow-x:auto}
+.tag{display:inline-block;border-radius:2px;padding:0 6px;font-size:11px;font-weight:700;line-height:18px;color:#fff}
+.t1st{background:var(--s1)} .t2nd{background:var(--s2)} .t3rd{background:var(--s3);color:#141414}
+.rank{display:inline-block;min-width:22px;text-align:center;font-size:12px;font-weight:700;color:var(--muted)}
+.rank.g{color:var(--accent)}
+.detail{background:var(--panel2);border-left:2px solid var(--accent);padding:10px 12px;margin:4px 0 8px;white-space:normal}
+.rep{border-left:2px solid var(--line);padding:2px 10px;margin:8px 0}
+.rep pre{white-space:pre-wrap;margin:4px 0 0;font:12px/1.4 ui-monospace,Consolas,monospace}
+label{display:block;font-size:11px;color:var(--muted);margin:10px 0 4px;text-transform:uppercase;letter-spacing:.05em}
+input,select,textarea{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:var(--r);padding:8px 10px}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
+textarea{min-height:130px;resize:vertical}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:0 10px}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.chip{border-radius:2px;padding:5px 10px;background:var(--panel2);border:1px solid var(--line);cursor:pointer;font-size:13px}
+.chip.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent);font-weight:600}
+.note{font-size:12px;color:var(--muted);margin:10px 0 0}
+.bar-legend{display:flex;gap:14px;font-size:11px;color:var(--muted);margin-top:6px}
+.bar-legend i{display:inline-block;width:8px;height:8px;margin-right:5px}
+#toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:8px 14px;border-radius:var(--r);font-size:13px;opacity:0;transition:.2s;pointer-events:none;z-index:9}
+#toast.show{opacity:1}
+.empty{padding:22px;text-align:center;color:var(--muted)}
+svg text{fill:var(--muted);font-size:10px}
+@media (max-width:480px){ th,td{padding:7px 8px} .top{padding:10px 12px 6px} main{padding:12px} }
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <h1 id="title">Shift <b>Board</b></h1>
+    <div class="sp"></div>
+    <select id="range" aria-label="Week"></select>
+    <button class="ghost sm" id="themeBtn" title="Light / dark" aria-label="Light or dark">◐</button>
+  </div>
+  <nav id="nav"></nav>
+</header>
+<main id="main"></main>
+<div id="toast"></div>
+
+<script>
+"use strict";
+/* Shift Board — a private shift logger. Everything is stored in this browser only.
+   Your own setup (site name, crew names, past shifts) comes from a personal pack file
+   you load on your device; none of it lives in this page. */
+const KEY = "shiftboard.v1";
+const DEFAULT_SETTINGS = { title:"Shift Board", workerWord:"Workers", supportLabel:"Support", hours:{"1st":8,"2nd":8,"3rd":8}, crew:[], source:"" };
+
+function load(){ try{ return JSON.parse(localStorage.getItem(KEY)) || {}; }catch(e){ return {}; } }
+let DB = Object.assign({settings:{}, base:[], shifts:{}, deleted:[], containers:[], theme:null}, load());
+const S = () => Object.assign({}, DEFAULT_SETTINGS, DB.settings, {hours:Object.assign({}, DEFAULT_SETTINGS.hours, (DB.settings||{}).hours)});
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(DB)); }catch(e){ toast("Couldn't save on this device"); } }
+
+/* ---------------- helpers ---------------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s==null?"":s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmt = (n,d=1) => n==null||!isFinite(n) ? "–" : (Math.round(n*10**d)/10**d).toLocaleString();
+const pd = s => { const [y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d); };
+const iso = d => d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+const weekStart = s => { const d=pd(s); d.setDate(d.getDate()-d.getDay()); return iso(d); };
+const dayLbl = s => pd(s).toLocaleDateString(undefined,{weekday:"short",month:"short",day:"numeric"});
+const wkLbl = s => { const a=pd(s), b=pd(s); b.setDate(b.getDate()+6); return a.toLocaleDateString(undefined,{month:"short",day:"numeric"})+" – "+b.toLocaleDateString(undefined,{month:"short",day:"numeric"}); };
+const tag = sh => `<span class="tag t${sh}">${sh}</span>`;
+function toast(t){ const el=$("#toast"); el.textContent=t; el.classList.add("show"); clearTimeout(toast.t); toast.t=setTimeout(()=>el.classList.remove("show"),2200); }
+const uid = () => Math.random().toString(36).slice(2,9);
+const mins = t => { if(!t) return null; const [h,m]=t.split(":").map(Number); return h*60+m; };
+function durH(a,b){ const x=mins(a), y=mins(b); if(x==null||y==null) return null; let d=y-x; if(d<0) d+=1440; return d/60; }
+
+/* ---------------- data model ---------------- */
+function allShifts(){
+  const map = {};
+  for (const s of DB.base||[]) map[s.id] = JSON.parse(JSON.stringify(s));
+  for (const [id,s] of Object.entries(DB.shifts)) map[id] = Object.assign(map[id]||{}, s, {edited:true});
+  for (const id of DB.deleted) delete map[id];
+  return Object.values(map).sort((a,b)=> a.date<b.date?-1:a.date>b.date?1:a.shift<b.shift?-1:1);
+}
+function metrics(s){
+  const e=s.eod||{}, st=s.start||{};
+  const workers = e.lumpers ?? st.lumpers ?? null;
+  const other = e.lumpersOther ?? st.lumpersOther ?? 0;
+  const labor = workers==null ? null : workers + (other||0);
+  const completed = e.completed ?? null;
+  const hours = S().hours[s.shift] || 8;
+  const cons = DB.containers.filter(c=>c.date===s.date && c.shift===s.shift);
+  const pieces = cons.reduce((a,c)=>a+(+c.pieces||0),0);
+  return {
+    workers, other, labor, completed, carried: e.carried ?? null,
+    support: e.osEpj ?? st.osEpj ?? null,
+    perWorker: labor && completed!=null ? completed/labor : null,
+    lhpc: labor && completed ? labor*hours/completed : null,
+    pieces: pieces||null, ranked: labor!=null && completed!=null
+  };
+}
+const inRange = d => { const r=$("#range").value; return r==="all" || weekStart(d)===r; };
+
+/* ---------------- report paste parser ---------------- */
+function parseReport(text){
+  const first = (text.split(/\r?\n/).find(l=>l.trim())||"").toLowerCase();
+  let shift = null; const m0 = first.match(/\b(1st|2nd|3rd|first|second|third)\s+shift/);
+  if (m0) shift = ({first:"1st",second:"2nd",third:"3rd"})[m0[1]]||m0[1];
+  const kind = /eod|end of day|end of shift/i.test(text) ? "eod" : "start";
+  const f = {}; const seen = new Set(); const add=(k,n)=>{ f[k]=(f[k]||0)+n; };
+  const W = "(?:lumpers?|workers?|unloaders?|crew|people)";
+  const SUP = "(?:os[- ]?epj|support|"+(S().supportLabel||"support").replace(/[^a-z0-9 ]/gi,"").trim().replace(/\s+/g,"[- ]?")+")";
+  for (let raw of text.split(/\r?\n|,/)){
+    let l = raw.replace(/[⁠‎]/g,"").trim().replace(/^[-•·\s]+/,"").trim();
+    const hm = l.match(/^.*?\b(eod|start|report)\b\s*[-–:]\s*(\d.*)$/i); if (hm) l = hm[2];
+    const low = l.toLowerCase(); let m;
+    if (!l || /^\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4}/.test(l)) continue;
+    if ((m=l.match(new RegExp("^(\\d+)\\s*[-–]?\\s*"+W+"\\b(.*)$","i"))) || (m=l.match(new RegExp("^"+W+"\\s+(\\d+)()$","i")))){
+      const n=+m[1], rest=m[2].toLowerCase();
+      if (/sent home|home early/.test(rest)) add("sentHome",n);
+      else if (/(1st|2nd|3rd) shift|from/.test(rest) && (seen.has("w") || /from|3rd shift/.test(rest))) add("lumpersOther",n);
+      else if (!seen.has("w")){ f.lumpers=n; seen.add("w"); }
+      continue;
+    }
+    if ((m=l.match(/^(\d+)\s*[-–]?\s*(new |fresh |completed )?(?:containers?|trailers?|loads?)\b(.*)$/i))){
+      const n=+m[1], pre=(m[2]||"").toLowerCase(), rest=m[3].toLowerCase();
+      if (/yard/.test(rest)) f.yardContainers=n;
+      else if (/finish/.test(rest) && /2nd|second|next/.test(rest)) add("carried",n);
+      else if (/done|complete|finished/.test(rest) || pre==="completed ") add("completed",n);
+      else add("containers",n);
+      continue;
+    }
+    if ((m=l.match(/^(?:containers?|trailers?|loads?)\s+(plugged|completed|done|finish 2nd shift)?\s*(\d+)\s*(completed|done)?$/i))){
+      const k=((m[1]||"")+(m[3]||"")).toLowerCase(), n=+m[2];
+      if (/finish/.test(k)) add("carried",n); else if (/complet|done/.test(k)) add("completed",n); else add("containers",n);
+      continue;
+    }
+    if ((m=l.match(/^(\d+)\s*(?:with \S+ )?(?:containers? )?finish/i)) && /2nd|second|next/.test(low)){ add("carried",+m[1]); continue; }
+    if ((m=l.match(/^(\d+)\s*[-–]?\s*(rollovers?|passovers?|partials?|carryovers?)\b/i))){ add("carried",+m[1]); continue; }
+    if (/^(no|0)[ -](rollovers?|passovers?)/.test(low)){ add("carried",0); continue; }
+    if ((m=l.match(new RegExp("^(\\d+)\\s*[-–]?\\s*"+SUP+"\\b(.*)$","i"))) || (m=l.match(new RegExp("^"+SUP+"\\s*[-–]?\\s*(\\d+)()\\s*$","i")))){
+      if (!/train|call|no show|n\/c|ns\/nc|late|absent|interview|came|arrived|start|from|certified|sick|schedule/i.test(m[2]) && !seen.has("s")){ f.osEpj=+m[1]; seen.add("s"); }
+      continue;
+    }
+    if ((m=low.match(/yard count\s+(\d+)/)) || (m=low.match(/^(\d+)\s+(imports )?yard count/))){ f.yard=+m[1]; continue; }
+    if ((m=low.match(/^(\d+)\s*[-–]?\s*shipping/))){ f.shipping=+m[1]; continue; }
+  }
+  if (kind==="eod" && f.completed==null && f.containers!=null){ f.completed=f.containers; delete f.containers; }
+  return {shift, kind, fields:f};
+}
+
+/* ---------------- views ---------------- */
+let TAB = "dash", SORT = {k:"lhpc", dir:1}, OPEN = null, SHIFTF = "all", PICK = new Set();
+const TABS = [["dash","Overview"],["shifts","Shifts"],["workers","People"],["log","Log"],["data","Setup"]];
+function lbl(){ const s=S(); return {lumpers:s.workerWord.toLowerCase(),lumpersOther:"from other shift",containers:"containers",completed:"completed",carried:"left over",osEpj:s.supportLabel,yard:"yard count",shipping:"shipping",sentHome:"sent home",yardContainers:"in yard"}; }
+const fields2txt = f => { const L=lbl(); return Object.entries(f||{}).map(([k,v])=>`${v} ${L[k]||k}`).join(" · "); };
+
+function renderHead(){
+  const t=S().title.trim(); const sp=t.lastIndexOf(" ");
+  $("#title").innerHTML = sp>0 ? esc(t.slice(0,sp))+" <b>"+esc(t.slice(sp+1))+"</b>" : "<b>"+esc(t)+"</b>";
+  document.title = t;
+  $("#nav").innerHTML = TABS.map(([k,l])=>`<button class="${k===TAB?"on":""}" data-tab="${k}">${l}</button>`).join("");
+}
+function renderRange(){
+  const weeks=[...new Set(allShifts().map(s=>weekStart(s.date)).concat(DB.containers.map(c=>weekStart(c.date))))].sort().reverse();
+  const cur=$("#range").value || "all";
+  $("#range").innerHTML = `<option value="all">All weeks</option>` + weeks.map(w=>`<option value="${w}">Wk of ${wkLbl(w)}</option>`).join("");
+  $("#range").value = [...$("#range").options].some(o=>o.value===cur) ? cur : "all";
+}
+function render(){
+  renderHead();
+  $("#main").innerHTML = ({dash:viewDash, shifts:viewShifts, workers:viewWorkers, log:viewLog, data:viewData})[TAB]();
+  if (TAB==="log") wireLog();
+}
+function byType(list){
+  const out={}, H=S().hours;
+  for (const sh of ["1st","2nd","3rd"]){
+    const rows=list.filter(s=>s.shift===sh).map(s=>({s,m:metrics(s)})).filter(x=>x.m.ranked);
+    const lab=rows.reduce((a,x)=>a+x.m.labor,0), comp=rows.reduce((a,x)=>a+x.m.completed,0), car=rows.reduce((a,x)=>a+(x.m.carried||0),0);
+    out[sh]={n:rows.length, avgLab:rows.length?lab/rows.length:null, avgComp:rows.length?comp/rows.length:null, perWorker: lab?comp/lab:null, lhpc: comp?lab*(H[sh]||8)/comp:null, comp, carried:car};
+  }
+  return out;
+}
+function viewDash(){
+  const list = allShifts().filter(s=>inRange(s.date));
+  if (!list.length) return welcome();
+  const ms = list.map(s=>({s,m:metrics(s)})).filter(x=>x.m.ranked), H=S().hours, W=S().workerWord;
+  const comp = ms.reduce((a,x)=>a+x.m.completed,0), lab = ms.reduce((a,x)=>a+x.m.labor*(H[x.s.shift]||8),0);
+  const t = byType(list);
+  const ranked = ms.filter(x=>x.m.lhpc).sort((a,b)=>a.m.lhpc-b.m.lhpc);
+  const row = (x,i)=>`<tr class="click" data-open="${x.s.id}"><td><span class="rank ${i<3?"g":""}">${i+1}</span></td><td>${dayLbl(x.s.date)}</td><td>${tag(x.s.shift)}</td><td class="n">${x.m.completed}</td><td class="n">${x.m.labor}</td><td class="n"><b>${fmt(x.m.lhpc)}</b></td></tr>`;
+  const head = `<tr><th></th><th>Day</th><th>Shift</th><th class="n">Done</th><th class="n">${esc(W)}</th><th class="n">Hrs/ctr</th></tr>`;
+  return `
+  <div class="kpis">
+    <div class="kpi"><div class="v">${ms.length}</div><div class="l">Shifts with EOD</div></div>
+    <div class="kpi"><div class="v">${comp}</div><div class="l">Containers done</div></div>
+    <div class="kpi"><div class="v">${fmt(comp/(ms.length||1))}</div><div class="l">Per shift</div></div>
+    <div class="kpi"><div class="v">${fmt(comp?lab/comp:null)}</div><div class="l">Labor hrs / container</div></div>
+  </div>
+  <div class="panel"><h2>Shift vs shift</h2><div class="scroll"><table>
+      <tr><th>Shift</th><th class="n">Shifts</th><th class="n">Avg ${esc(W.toLowerCase())}</th><th class="n">Avg done</th><th class="n">Per ${esc(W.toLowerCase().replace(/s$/,""))}</th><th class="n">Labor hrs / ctr</th><th class="n">Left over</th></tr>
+      ${["1st","2nd","3rd"].map(sh=>{const v=t[sh]; return `<tr><td>${tag(sh)} <span class="muted">${H[sh]}h</span></td><td class="n">${v.n}</td><td class="n">${fmt(v.avgLab)}</td><td class="n">${fmt(v.avgComp)}</td><td class="n">${fmt(v.perWorker,2)}</td><td class="n"><b>${fmt(v.lhpc)}</b></td><td class="n">${v.carried}</td></tr>`;}).join("")}
+    </table></div>
+    <div class="pb note" style="margin:0">Labor hrs / container = ${esc(W.toLowerCase())} × scheduled shift hours ÷ containers completed. Lower is faster.</div></div>
+  <div class="panel"><h2>Containers completed by week</h2><div class="pb">${weekChart()}</div></div>
+  <div class="two">
+    <div class="panel"><h2>Fastest shifts</h2><div class="scroll"><table>${head}${ranked.slice(0,5).map(row).join("")}</table></div></div>
+    <div class="panel"><h2>Slowest shifts</h2><div class="scroll"><table>${head}${ranked.slice(-5).reverse().map((x,i)=>row(x,ranked.length-1-i)).join("")}</table></div></div>
+  </div>
+  ${OPEN?`<div class="panel"><div class="pb">${detailHTML(OPEN)}</div></div>`:""}`;
+}
+function welcome(){
+  return `<div class="panel"><h2>Welcome</h2><div class="pb">
+    <p>Log each shift's start and end-of-day numbers, plus door-by-door work, and this board ranks shifts and people for you.</p>
+    <p class="muted">Everything stays in this browser on this device. Nothing is uploaded.</p>
+    <div class="row"><button class="pri" data-tab="log">Log a shift</button><button data-tab="data">Load a personal pack</button></div></div></div>`;
+}
+function weekChart(){
+  const list = allShifts(), weeks=[...new Set(list.map(s=>weekStart(s.date)))].sort();
+  const data = weeks.map(w=>{ const o={w}; for(const sh of ["1st","2nd","3rd"]) o[sh]=list.filter(s=>weekStart(s.date)===w&&s.shift===sh).reduce((a,s)=>a+(metrics(s).completed||0),0); return o; });
+  const max = Math.max(1,...data.map(d=>d["1st"]+d["2nd"]+d["3rd"]));
+  const Wd=Math.max(300,weeks.length*64), H=170, bw=30, gap=(Wd-20)/Math.max(1,weeks.length);
+  let g=`<line x1="0" x2="${Wd}" y1="${H-22}" y2="${H-22}" stroke="var(--line)"/>`;
+  data.forEach((d,i)=>{ let y=H-22; const x=20+i*gap+(gap-bw)/2;
+    for(const sh of ["1st","2nd","3rd"]){ const h=d[sh]/max*(H-44); if(h>0){ y-=h; g+=`<rect x="${x}" y="${y}" width="${bw}" height="${h}" fill="var(--s${sh[0]})"><title>${sh}: ${d[sh]}</title></rect>`; } }
+    g+=`<text x="${x+bw/2}" y="${y-4}" text-anchor="middle" style="fill:var(--text);font-weight:700">${d["1st"]+d["2nd"]+d["3rd"]}</text><text x="${x+bw/2}" y="${H-7}" text-anchor="middle">${pd(d.w).toLocaleDateString(undefined,{month:"short",day:"numeric"})}</text>`;
+  });
+  return `<div class="scroll"><svg width="${Wd}" height="${H}" viewBox="0 0 ${Wd} ${H}">${g}</svg></div><div class="bar-legend"><span><i style="background:var(--s1)"></i>1st</span><span><i style="background:var(--s2)"></i>2nd</span><span><i style="background:var(--s3)"></i>3rd</span><span>Weeks run Sun–Sat</span></div>`;
+}
+function viewShifts(){
+  let list = allShifts().filter(s=>inRange(s.date)).map(s=>({s,m:metrics(s)}));
+  if (!list.length) return welcome();
+  if (SHIFTF!=="all") list = list.filter(x=>x.s.shift===SHIFTF);
+  const rankedIds = list.filter(x=>x.m.lhpc).sort((a,b)=>a.m.lhpc-b.m.lhpc).map(x=>x.s.id);
+  const key = SORT.k, val = x => key==="date"? x.s.date+x.s.shift : key==="rank" ? (rankedIds.indexOf(x.s.id)+1||999) : x.m[key];
+  list.sort((a,b)=>{ const va=val(a), vb=val(b); if(va==null&&vb==null) return 0; if(va==null) return 1; if(vb==null) return -1; return (va<vb?-1:va>vb?1:0)*SORT.dir; });
+  const th=(k,l,n)=>`<th class="${n?"n":""}" data-sort="${k}">${l}${SORT.k===k?(SORT.dir>0?" ▲":" ▼"):""}</th>`;
+  return `<div class="panel"><h2>All shifts <small>tap a header to sort · tap a row for details</small></h2>
+    <div class="pb" style="padding-bottom:0"><div class="row">${["all","1st","2nd","3rd"].map(x=>`<button class="sm ${SHIFTF===x?"on":""}" data-shiftf="${x}">${x==="all"?"All":x}</button>`).join("")}</div></div>
+    <div class="scroll" style="margin-top:10px"><table>
+    <tr>${th("rank","#")}${th("date","Day")}<th>Shift</th>${th("completed","Done",1)}${th("carried","Left",1)}${th("labor",esc(S().workerWord),1)}${th("perWorker","Per head",1)}${th("lhpc","Hrs / ctr",1)}${th("support",esc(S().supportLabel),1)}${th("pieces","Pieces",1)}</tr>
+    ${list.map(x=>{ const r=rankedIds.indexOf(x.s.id)+1; return `<tr class="click" data-open="${x.s.id}">
+      <td><span class="rank ${r&&r<=3?"g":""}">${r||"–"}</span></td><td>${dayLbl(x.s.date)}</td><td>${tag(x.s.shift)}${x.s.edited?' <span class="muted">✎</span>':""}</td>
+      <td class="n">${x.m.completed??"–"}</td><td class="n">${x.m.carried??"–"}</td><td class="n">${x.m.labor??"–"}${x.m.other?`<span class="muted"> +${x.m.other}</span>`:""}</td>
+      <td class="n">${fmt(x.m.perWorker,2)}</td><td class="n"><b>${fmt(x.m.lhpc)}</b></td><td class="n">${x.m.support??"–"}</td><td class="n">${x.m.pieces?x.m.pieces.toLocaleString():"–"}</td></tr>
+      ${OPEN===x.s.id?`<tr><td colspan="10" style="white-space:normal">${detailHTML(x.s.id)}</td></tr>`:""}`; }).join("")}
+    </table></div>
+    <div class="pb note" style="margin:0">Shifts without EOD numbers aren't ranked. "+2" means people borrowed from another shift, counted in labor.</div></div>`;
+}
+function detailHTML(id){
+  const s = allShifts().find(x=>x.id===id); if(!s) return "";
+  const cons = DB.containers.filter(c=>c.date===s.date&&c.shift===s.shift);
+  return `<div class="detail"><div class="row" style="justify-content:space-between"><b>${dayLbl(s.date)} · ${s.shift} shift</b>
+      <span class="row"><button class="sm" data-edit="${s.id}">Edit</button><button class="sm ghost" data-close>Close</button></span></div>
+    <div class="muted" style="margin:6px 0">Start: ${fields2txt(s.start)||"—"}<br>EOD: ${fields2txt(s.eod)||"—"}</div>
+    ${cons.length?`<div><b>Doors:</b> ${cons.map(c=>`${esc(c.door)} (${(c.crew||[]).map(esc).join(", ")||"no names"})${c.pieces?` ${(+c.pieces).toLocaleString()} pcs`:""}`).join(" · ")}</div>`:""}
+    ${(s.reports||[]).map(r=>`<div class="rep"><span class="muted">${esc(r.kind)} — ${esc(r.who)}, ${esc(String(r.at).replace("T"," "))}</span><pre>${esc(r.text)}</pre></div>`).join("")}
+    ${s.notes?`<div class="rep"><span class="muted">Note</span><pre>${esc(s.notes)}</pre></div>`:""}</div>`;
+}
+
+/* ---------- people (from door logs) ---------- */
+function workerStats(){
+  const P = {};
+  for (const c of DB.containers.filter(c=>inRange(c.date))){
+    const crew=(c.crew||[]).filter(Boolean); if(!crew.length) continue;
+    const share=1/crew.length, h=durH(c.start,c.end), pcs=+c.pieces||0;
+    for (const n of crew){
+      const p = P[n] ||= {name:n, doors:0, credit:0, pieces:0, hours:0, shifts:new Set()};
+      p.doors++; p.credit += c.status==="rolled" ? share*0.5 : share; p.pieces += pcs*share; p.shifts.add(c.date+c.shift);
+      if (h!=null) p.hours += h;
+    }
+  }
+  return Object.values(P).map(p=>({...p, shifts:p.shifts.size, pph: p.hours&&p.pieces? p.pieces/p.hours : null, hpc: p.credit&&p.hours? p.hours/p.credit : null}));
+}
+function viewWorkers(){
+  const rows = workerStats();
+  if (!rows.length) return `<div class="panel"><h2>People</h2><div class="pb">
+    <p>No door logs yet${$("#range").value!=="all"?" this week":""}. Rankings come from <b>Log → Door</b>: door, piece count, who worked it, start and end.</p>
+    <p class="note">Each door's credit is split evenly across its crew. A rolled-over door counts as half.</p></div></div>`;
+  const k = ["pieces","pph","credit","hpc","doors","shifts"].includes(SORT.k) ? SORT.k : "pieces";
+  const dir = SORT.k===k ? SORT.dir : -1;
+  rows.sort((a,b)=>{ const va=a[k], vb=b[k]; if(va==null) return 1; if(vb==null) return -1; return (va-vb)*dir; });
+  const th=(k2,l)=>`<th class="n" data-sort="${k2}">${l}${k===k2?(dir>0?" ▲":" ▼"):""}</th>`;
+  return `<div class="panel"><h2>People <small>from door logs</small></h2><div class="scroll"><table>
+    <tr><th></th><th>Name</th>${th("pieces","Pieces")}${th("pph","Pcs / hr")}${th("credit","Containers")}${th("hpc","Person-hrs / ctr")}${th("doors","Doors")}${th("shifts","Shifts")}</tr>
+    ${rows.map((p,i)=>`<tr><td><span class="rank ${i<3?"g":""}">${i+1}</span></td><td>${esc(p.name)}</td><td class="n">${Math.round(p.pieces).toLocaleString()}</td><td class="n"><b>${fmt(p.pph,0)}</b></td><td class="n">${fmt(p.credit,2)}</td><td class="n">${fmt(p.hpc)}</td><td class="n">${p.doors}</td><td class="n">${p.shifts}</td></tr>`).join("")}
+  </table></div><div class="pb note" style="margin:0">Credit splits evenly across the crew on each door; rollovers count half. Person-hrs / container = hours on doors ÷ containers credited (lower is faster).</div></div>`;
+}
+
+/* ---------- log ---------- */
+function shiftGuess(){
+  const now=new Date(), d=new Date(now), h=now.getHours(), wd=now.getDay();
+  if (h<4){ d.setDate(d.getDate()-1); return {date:iso(d), shift:"2nd"}; }
+  if (wd===5||wd===6||wd===0) return {date:iso(d), shift:"3rd"};
+  return {date:iso(d), shift: h>=16?"2nd":"1st"};
+}
+function crewList(){ return [...new Set((S().crew||[]).concat(DB.containers.flatMap(c=>c.crew||[])))].sort(); }
+const shiftSel = (id,v)=>`<select id="${id}">${["1st","2nd","3rd"].map(s=>`<option ${s===v?"selected":""}>${s}</option>`).join("")}</select>`;
+function viewLog(){
+  const g = shiftGuess(), recent = DB.containers.slice(-8).reverse();
+  return `
+  <div class="panel"><h2>Paste a report <small>start or EOD</small></h2><div class="pb">
+    <textarea id="pasteTxt" placeholder="3rd Shift EOD&#10;14 workers&#10;5 containers completed&#10;1 rollover"></textarea>
+    <div class="grid2">
+      <div><label>Shift date</label><input type="date" id="pDate" value="${g.date}"></div>
+      <div><label>Shift</label>${shiftSel("pShift",g.shift)}</div>
+      <div><label>Type</label><select id="pKind"><option value="start">Start</option><option value="eod">EOD</option></select></div>
+    </div>
+    <div id="pPreview" class="detail" style="display:none;margin-top:10px"></div>
+    <div class="row" style="margin-top:12px"><button class="pri" id="pSave">Save report</button><span class="note" style="margin:0">Numbers are read for you. Check the preview.</span></div>
+  </div></div>
+
+  <div class="panel"><h2>Door <small>powers people rankings and piece counts</small></h2><div class="pb">
+    <div class="grid2">
+      <div><label>Shift date</label><input type="date" id="cDate" value="${g.date}"></div>
+      <div><label>Shift</label>${shiftSel("cShift",g.shift)}</div>
+      <div><label>Door #</label><input id="cDoor" inputmode="numeric" maxlength="4"></div>
+      <div><label>Container #</label><input id="cTrailer" placeholder="optional"></div>
+      <div><label>Piece count</label><input id="cPieces" inputmode="numeric"></div>
+      <div><label>Status</label><select id="cStatus"><option value="done">Completed</option><option value="rolled">Rolled over</option><option value="pickup">Finished a rollover</option></select></div>
+      <div><label>Start</label><input type="time" id="cStart"></div>
+      <div><label>End</label><input type="time" id="cEnd"></div>
+    </div>
+    <label>Crew <span style="text-transform:none">(tap names)</span></label>
+    <div class="chips">${crewList().map(n=>`<span class="chip ${PICK.has(n)?"on":""}" data-chip="${esc(n)}">${esc(n)}</span>`).join("")||`<span class="muted">Add names below or in Setup.</span>`}</div>
+    <div class="row" style="margin-top:6px"><input id="newName" placeholder="Add a name" style="flex:1;min-width:140px"><button class="sm" id="addName">Add</button></div>
+    <label>Notes</label><input id="cNotes" placeholder="optional">
+    <div class="row" style="margin-top:12px"><button class="pri" id="cSave">Save door</button><button class="sm ghost" id="nowStart">Start = now</button><button class="sm ghost" id="nowEnd">End = now</button></div>
+  </div></div>
+
+  <div class="panel"><h2>Recent doors</h2>
+    ${recent.length?`<div class="scroll"><table><tr><th>Day</th><th>Shift</th><th>Door</th><th class="n">Pieces</th><th>Crew</th><th class="n">Time</th><th></th></tr>
+    ${recent.map(c=>`<tr><td>${dayLbl(c.date)}</td><td>${tag(c.shift)}</td><td>${esc(c.door)}</td><td class="n">${c.pieces?(+c.pieces).toLocaleString():"–"}</td><td>${(c.crew||[]).map(esc).join(", ")}</td><td class="n">${durH(c.start,c.end)!=null?fmt(durH(c.start,c.end))+"h":"–"}</td><td><button class="sm ghost" data-delc="${c.id}" aria-label="Delete">✕</button></td></tr>`).join("")}</table></div>`:`<div class="empty">No doors logged yet.</div>`}
+  </div>`;
+}
+function wireLog(){
+  $("#pasteTxt").addEventListener("input",()=>{ const t=$("#pasteTxt").value.trim(), pv=$("#pPreview"); if(!t){pv.style.display="none";return;}
+    const r=parseReport(t); if(r.shift) $("#pShift").value=r.shift; $("#pKind").value=r.kind;
+    pv.style.display="block"; pv.innerHTML=`<b>Read as:</b> ${r.kind.toUpperCase()} · ${$("#pShift").value} shift<br>${fields2txt(r.fields)||"<span class='bad'>No numbers found.</span>"}`; });
+}
+function savePaste(){
+  const t=$("#pasteTxt").value.trim(); if(!t){toast("Paste a report first");return;}
+  const r=parseReport(t), date=$("#pDate").value, sh=$("#pShift").value, kind=$("#pKind").value, id=date+"_"+sh;
+  const s = JSON.parse(JSON.stringify(allShifts().find(x=>x.id===id) || {id,date,shift:sh,start:{},eod:{},reports:[]}));
+  s[kind] = Object.assign({}, s[kind], r.fields);
+  s.reports = (s.reports||[]).concat([{who:"Me",at:new Date().toISOString().slice(0,16),kind:kind==="eod"?"EOD":"Start",text:t}]);
+  delete s.edited; DB.shifts[id]=s; DB.deleted=DB.deleted.filter(x=>x!==id); save();
+  toast("Saved "+sh+" shift "+(kind==="eod"?"EOD":"start")); renderRange(); render();
+}
+function saveDoor(){
+  const c={id:uid(), date:$("#cDate").value, shift:$("#cShift").value, door:$("#cDoor").value.trim(), trailer:$("#cTrailer").value.trim(),
+    pieces:$("#cPieces").value.replace(/\D/g,""), status:$("#cStatus").value, start:$("#cStart").value, end:$("#cEnd").value, crew:[...PICK], notes:$("#cNotes").value.trim()};
+  if(!c.door){toast("Add a door number");return;}
+  DB.containers.push(c); save(); PICK=new Set(); toast("Door "+c.door+" saved"); renderRange(); render();
+}
+
+/* ---------- edit ---------- */
+function editShift(id){
+  const s = allShifts().find(x=>x.id===id); if(!s) return; const L=lbl();
+  const F=["lumpers","lumpersOther","containers","completed","carried","osEpj","yard","shipping"];
+  const box = part => F.map(k=>`<div><label>${esc(L[k])}</label><input data-ef="${part}.${k}" inputmode="numeric" value="${s[part]?.[k]??""}"></div>`).join("");
+  $("#main").innerHTML = `<div class="panel"><h2>Edit ${dayLbl(s.date)} · ${s.shift} shift</h2><div class="pb">
+    <b>Start</b><div class="grid2">${box("start")}</div><br><b>EOD</b><div class="grid2">${box("eod")}</div>
+    <label>Note</label><textarea id="eNote" style="min-height:70px">${esc(s.notes||"")}</textarea>
+    <div class="row" style="margin-top:12px"><button class="pri" data-esave="${id}">Save</button><button class="sm ghost" data-cancel>Cancel</button><span style="flex:1"></span><button class="sm" data-del="${id}">Delete shift</button></div></div></div>`;
+}
+function saveEdit(id){
+  const s = JSON.parse(JSON.stringify(allShifts().find(x=>x.id===id)));
+  document.querySelectorAll("[data-ef]").forEach(i=>{ const [p,k]=i.dataset.ef.split("."); const v=i.value.trim(); s[p]=s[p]||{}; if(v==="") delete s[p][k]; else s[p][k]=+v.replace(/\D/g,""); });
+  s.notes=$("#eNote").value; delete s.edited; DB.shifts[id]=s; save(); toast("Saved"); render();
+}
+
+/* ---------- setup & backup ---------- */
+function viewData(){
+  const s=S();
+  return `<div class="panel"><h2>Setup</h2><div class="pb">
+    <div class="grid2">
+      <div><label>Board name</label><input id="sTitle" value="${esc(s.title)}"></div>
+      <div><label>What you call workers</label><input id="sWorker" value="${esc(s.workerWord)}"></div>
+      <div><label>Support team label</label><input id="sSupport" value="${esc(s.supportLabel)}"></div>
+      <div><label>1st shift hours</label><input id="sH1" inputmode="decimal" value="${s.hours["1st"]}"></div>
+      <div><label>2nd shift hours</label><input id="sH2" inputmode="decimal" value="${s.hours["2nd"]}"></div>
+      <div><label>3rd shift hours</label><input id="sH3" inputmode="decimal" value="${s.hours["3rd"]}"></div>
+    </div>
+    <label>Crew names (one per line)</label><textarea id="sCrew" style="min-height:90px">${esc((s.crew||[]).join("\n"))}</textarea>
+    <div class="row" style="margin-top:12px"><button class="pri" id="sSave">Save setup</button></div>
+  </div></div>
+  <div class="panel"><h2>Backup & personal pack</h2><div class="pb">
+    <p>Everything is stored <b>only in this browser on this device</b>. Save a backup now and then. Load a backup or personal pack to bring your setup and history onto another device.</p>
+    <div class="row"><button class="pri" id="bExport">Save backup</button><label class="chip" style="margin:0;text-transform:none;letter-spacing:0;font-size:13px;color:var(--text)">Load backup / pack<input type="file" id="bImport" accept=".json,application/json" style="display:none"></label><button class="sm" id="bCopy">Copy week summary</button></div>
+    <p class="note">On this device: ${(DB.base||[]).length} shifts from a pack · ${Object.keys(DB.shifts).length} added or edited · ${DB.containers.length} doors.${s.source?" Pack: "+esc(s.source):""}</p>
+    <div class="row" style="margin-top:12px"><button class="sm ghost" id="bReset">Erase everything on this device…</button></div>
+  </div></div>`;
+}
+function saveSetup(){
+  const n=v=>{ const x=parseFloat(v); return isFinite(x)&&x>0?x:8; };
+  DB.settings = Object.assign({}, DB.settings, {title:$("#sTitle").value.trim()||"Shift Board", workerWord:$("#sWorker").value.trim()||"Workers", supportLabel:$("#sSupport").value.trim()||"Support",
+    hours:{"1st":n($("#sH1").value),"2nd":n($("#sH2").value),"3rd":n($("#sH3").value)}, crew:$("#sCrew").value.split(/\n/).map(x=>x.trim()).filter(Boolean)});
+  save(); toast("Setup saved"); render();
+}
+function exportData(){
+  const blob=new Blob([JSON.stringify({app:"shiftboard",v:1,saved:new Date().toISOString(),settings:DB.settings,base:DB.base,shifts:DB.shifts,deleted:DB.deleted,containers:DB.containers},null,1)],{type:"application/json"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="shift-board-backup-"+iso(new Date())+".json"; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500); toast("Backup saved");
+}
+function importData(file){
+  const r=new FileReader(); r.onload=()=>{ try{ const d=JSON.parse(r.result); if(d.app!=="shiftboard") throw 0;
+    if (d.settings) DB.settings=Object.assign({}, DB.settings, d.settings);
+    if (Array.isArray(d.base)) { const m={}; for(const s of (DB.base||[]).concat(d.base)) m[s.id]=s; DB.base=Object.values(m); }
+    DB.shifts=Object.assign(DB.shifts, d.shifts||{}); DB.deleted=[...new Set(DB.deleted.concat(d.deleted||[]))];
+    const have=new Set(DB.containers.map(c=>c.id)); DB.containers=DB.containers.concat((d.containers||[]).filter(c=>!have.has(c.id)));
+    save(); renderRange(); render(); toast("Loaded");
+  }catch(e){ toast("That file isn't a Shift Board backup or pack"); } }; r.readAsText(file);
+}
+function weekSummary(){
+  const w = $("#range").value==="all" ? weekStart(iso(new Date())) : $("#range").value, t=byType(allShifts().filter(s=>weekStart(s.date)===w)), W=S().workerWord.toLowerCase();
+  let out=`${S().title} — week of ${wkLbl(w)}\n`;
+  for (const sh of ["1st","2nd","3rd"]) if(t[sh].n) out+=`${sh}: ${t[sh].n} shifts, ${t[sh].comp} containers, ${fmt(t[sh].perWorker,2)} per ${W.replace(/s$/,"")}, ${fmt(t[sh].lhpc)} labor hrs/container\n`;
+  return out;
+}
+
+/* ---------------- events ---------------- */
+document.addEventListener("click", e=>{
+  const t=e.target.closest("button,[data-open],[data-sort],[data-chip]"); if(!t) return;
+  if (t.dataset.tab){ TAB=t.dataset.tab; OPEN=null; SORT = TAB==="workers"?{k:"pieces",dir:-1}:TAB==="shifts"?{k:"date",dir:-1}:SORT; render(); return; }
+  if (t.dataset.sort){ const k=t.dataset.sort; SORT = SORT.k===k?{k,dir:-SORT.dir}:{k,dir:(k==="lhpc"||k==="rank"||k==="hpc")?1:-1}; render(); return; }
+  if (t.dataset.shiftf){ SHIFTF=t.dataset.shiftf; render(); return; }
+  if (t.dataset.open){ OPEN = OPEN===t.dataset.open?null:t.dataset.open; render(); return; }
+  if (t.hasAttribute("data-close")){ OPEN=null; render(); return; }
+  if (t.dataset.edit){ editShift(t.dataset.edit); return; }
+  if (t.dataset.esave){ saveEdit(t.dataset.esave); return; }
+  if (t.hasAttribute("data-cancel")){ render(); return; }
+  if (t.dataset.del){ if(confirm("Delete this shift?")){ DB.deleted.push(t.dataset.del); delete DB.shifts[t.dataset.del]; save(); OPEN=null; renderRange(); render(); } return; }
+  if (t.dataset.delc){ DB.containers=DB.containers.filter(c=>c.id!==t.dataset.delc); save(); render(); return; }
+  if (t.dataset.chip!=null){ const n=t.dataset.chip; PICK.has(n)?PICK.delete(n):PICK.add(n); t.classList.toggle("on"); return; }
+  switch(t.id){
+    case "pSave": savePaste(); break;
+    case "cSave": saveDoor(); break;
+    case "addName": { const n=$("#newName").value.trim(); if(n){ DB.settings=Object.assign({},DB.settings,{crew:[...new Set((S().crew||[]).concat(n))]}); PICK.add(n); save();
+      const keep={}; ["cDate","cShift","cDoor","cTrailer","cPieces","cStatus","cStart","cEnd","cNotes","pasteTxt","pDate","pShift","pKind"].forEach(k=>keep[k]=$("#"+k).value); render(); Object.entries(keep).forEach(([k,v])=>$("#"+k).value=v); } break; }
+    case "nowStart": $("#cStart").value=new Date().toTimeString().slice(0,5); break;
+    case "nowEnd": $("#cEnd").value=new Date().toTimeString().slice(0,5); break;
+    case "sSave": saveSetup(); break;
+    case "bExport": exportData(); break;
+    case "bCopy": { const s=weekSummary(); (navigator.clipboard?navigator.clipboard.writeText(s):Promise.reject()).then(()=>toast("Copied"),()=>prompt("Copy this:",s)); break; }
+    case "bReset": if(confirm("Erase all shifts, doors and setup on this device? Save a backup first if you need it.")){ DB={settings:{},base:[],shifts:{},deleted:[],containers:[],theme:DB.theme}; save(); renderRange(); render(); } break;
+    case "themeBtn": { const cur=document.documentElement.dataset.theme, nxt=cur==="dark"?"light":cur==="light"?"":"dark"; if(nxt) document.documentElement.dataset.theme=nxt; else delete document.documentElement.dataset.theme; DB.theme=nxt||null; save(); break; }
+  }
+});
+document.addEventListener("change", e=>{ if(e.target.id==="range"){ OPEN=null; render(); } if(e.target.id==="bImport"&&e.target.files[0]) importData(e.target.files[0]); });
+
+if (DB.theme) document.documentElement.dataset.theme = DB.theme;
+renderRange(); render();
+</script>
+</body>
+</html>
