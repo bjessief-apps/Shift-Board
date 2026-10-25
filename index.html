@@ -66,6 +66,11 @@ button.danger{background:var(--bad);border-color:var(--bad);color:#fff;font-weig
 .days button{min-width:0;padding:7px 0;font-size:12px;font-weight:600;background:var(--panel)}
 .days button.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
 .tot{font-size:12px;color:var(--muted);margin-top:8px}
+.perday{border-top:1px solid var(--line);margin-top:4px;padding-top:6px}
+.dayrow{display:grid;grid-template-columns:40px minmax(0,1fr) minmax(0,1fr);gap:6px;align-items:center;margin-top:6px}
+.dayrow b{font-size:12px}
+.dayrow input{padding:6px 8px}
+.dtt{grid-column:2 / 4;font-size:11px;color:var(--muted);margin-top:-2px}
 .tot b{color:var(--text)}
 .crew{list-style:none;margin:8px 0 0;padding:0;border:1px solid var(--line);border-radius:var(--r)}
 .crew li{display:flex;align-items:center;gap:8px;padding:6px 6px 6px 12px;border-bottom:1px solid var(--line)}
@@ -119,8 +124,8 @@ svg text{fill:var(--muted);font-size:10px}
 <script>
 "use strict";
 /* Shift Board — a private shift logger. Everything is stored in this browser only.
-   Your own setup (site name, crew names, past shifts) comes from a personal pack file
-   you load on your device; none of it lives in this page. */
+   Your own setup and history come from a backup file you load on your device;
+   none of it lives in this page. */
 const KEY = "shiftboard.v1";
 const DKEY = "shiftboard.draft";
 const DEFAULT_SETTINGS = { title:"", workerWord:"Workers", supportLabel:"Support", shifts:[], crew:[], source:"" };
@@ -131,11 +136,14 @@ function load(){ try{ return JSON.parse(localStorage.getItem(KEY)) || {}; }catch
 let DB = Object.assign({settings:{}, base:[], shifts:{}, deleted:[], containers:[], theme:null}, load());
 function save(){ _SA = null; try{ localStorage.setItem(KEY, JSON.stringify(DB)); }catch(e){ toast("Couldn't save on this device"); } }
 
-/* Shift schedules. Older backups and packs stored 1st/2nd/3rd shift hours; those become named shifts. */
+/* Shift schedules. Older backups stored 1st/2nd/3rd shift hours; those become named shifts. */
 function normShifts(st){
   let list = Array.isArray(st.shifts) ? st.shifts : null;
   if (!list){ const h = st.hours || {}; list = Object.keys(h).map(id=>({id, name:id+" shift", hours:+h[id]||null})); }
-  return list.filter(x=>x && x.id).map(x=>({id:String(x.id), name:String(x.name||x.id), days:Array.isArray(x.days)?x.days.map(Number):[], start:x.start||"", end:x.end||"", hours:x.hours!=null&&+x.hours>0?+x.hours:null}));
+  return list.filter(x=>x && x.id).map(x=>{
+    const dt = {}; for (const [k,v] of Object.entries(x.dayTimes||{})) if (v && (v.start||v.end)) dt[k] = {start:v.start||"", end:v.end||""};
+    return {id:String(x.id), name:String(x.name||x.id), days:Array.isArray(x.days)?x.days.map(Number):[], start:x.start||"", end:x.end||"", perDay:!!x.perDay, dayTimes:dt, hours:x.hours!=null&&+x.hours>0?+x.hours:null};
+  });
 }
 function normCrew(c){
   const seen = new Set();
@@ -171,7 +179,11 @@ function shiftsAll(){
 }
 const shiftInfo = id => { const all=shiftsAll(), i=all.findIndex(x=>x.id===id); return i<0 ? {id, name:id||"–", hours:null, color:PALETTE[0], i:99} : Object.assign({}, all[i], {color:PALETTE[i%PALETTE.length], i}); };
 const shiftName = id => shiftInfo(id).name;
-function shiftHours(x){ if(!x) return null; if(x.start && x.end){ const h=durH(x.start,x.end); return h>0?h:null; } return x.hours||null; }
+/* a shift's times on a given weekday: that day's custom hours if set, otherwise the usual hours */
+function dayTimes(x, wd){ const o = x && x.perDay && wd!=null && x.dayTimes ? x.dayTimes[wd] : null; return {start:(o&&o.start)||x.start||"", end:(o&&o.end)||x.end||""}; }
+function shiftHours(x, wd){ if(!x) return null; const t=dayTimes(x, wd); if(t.start && t.end){ const h=durH(t.start,t.end); return h>0?h:null; } return x.hours||null; }
+/* what to show next to a shift name: its usual hours, or "varies" when days differ */
+function hoursLabel(x){ const days=x.days&&x.days.length?x.days:[null], hs=[...new Set(days.map(d=>shiftHours(x,d)).filter(Boolean))]; return !hs.length ? "" : hs.length>1 ? "varies" : fmt(hs[0])+"h"; }
 const tag = id => { const x=shiftInfo(id); return `<span class="tag" style="background:${x.color}">${esc(x.name)}</span>`; };
 function toast(t){ const el=$("#toast"); el.textContent=t; el.classList.add("show"); clearTimeout(toast.t); toast.t=setTimeout(()=>el.classList.remove("show"),2200); }
 const uid = () => Math.random().toString(36).slice(2,9);
@@ -193,7 +205,7 @@ function metrics(s){
   const other = e.lumpersOther ?? st.lumpersOther ?? 0;
   const labor = workers==null ? null : workers + (other||0);
   const completed = e.completed ?? null;
-  const hours = shiftHours(shiftInfo(s.shift));
+  const hours = shiftHours(shiftInfo(s.shift), pd(s.date).getDay());
   const cons = DB.containers.filter(c=>c.date===s.date && c.shift===s.shift);
   const pieces = cons.reduce((a,c)=>a+(+c.pieces||0),0);
   return {
@@ -295,10 +307,11 @@ function go(tab){
 function byType(list){
   const out={};
   for (const info of shiftsAll()){
-    const sh=info.id, H=shiftHours(info);
+    const sh=info.id;
     const rows=list.filter(s=>s.shift===sh).map(s=>({s,m:metrics(s)})).filter(x=>x.m.ranked);
     const lab=rows.reduce((a,x)=>a+x.m.labor,0), comp=rows.reduce((a,x)=>a+x.m.completed,0), car=rows.reduce((a,x)=>a+(x.m.carried||0),0);
-    out[sh]={info, hours:H, n:rows.length, avgLab:rows.length?lab/rows.length:null, avgComp:rows.length?comp/rows.length:null, perWorker: lab?comp/lab:null, lhpc: comp&&H?lab*H/comp:null, comp, carried:car};
+    const timed=rows.filter(x=>x.m.hours), labH=timed.reduce((a,x)=>a+x.m.labor*x.m.hours,0), compT=timed.reduce((a,x)=>a+x.m.completed,0);
+    out[sh]={info, hours:hoursLabel(info), missing:rows.length-timed.length, n:rows.length, avgLab:rows.length?lab/rows.length:null, avgComp:rows.length?comp/rows.length:null, perWorker: lab?comp/lab:null, lhpc: compT?labH/compT:null, comp, carried:car};
   }
   return out;
 }
@@ -309,7 +322,7 @@ function viewDash(){
   const comp = ms.reduce((a,x)=>a+x.m.completed,0);
   const timed = ms.filter(x=>x.m.hours), compT = timed.reduce((a,x)=>a+x.m.completed,0), lab = timed.reduce((a,x)=>a+x.m.labor*x.m.hours,0);
   const t = byType(list), used = Object.values(t).filter(v=>v.n || !v.info.orphan);
-  const noHours = Object.values(t).filter(v=>v.n && !v.hours).map(v=>v.info.name);
+  const noHours = Object.values(t).filter(v=>v.missing).map(v=>v.info.name);
   const ranked = ms.filter(x=>x.m.lhpc).sort((a,b)=>a.m.lhpc-b.m.lhpc);
   const row = (x,i)=>`<tr class="click" data-open="${x.s.id}"><td><span class="rank ${i<3?"g":""}">${i+1}</span></td><td>${dayLbl(x.s.date)}</td><td>${tag(x.s.shift)}</td><td class="n">${x.m.completed}</td><td class="n">${x.m.labor}</td><td class="n"><b>${fmt(x.m.lhpc)}</b></td></tr>`;
   const head = `<tr><th></th><th>Day</th><th>Shift</th><th class="n">Done</th><th class="n">${esc(W)}</th><th class="n">Hrs/ctr</th></tr>`;
@@ -322,7 +335,7 @@ function viewDash(){
   </div>
   <div class="panel"><h2>Shift vs shift</h2><div class="scroll"><table>
       <tr><th>Shift</th><th class="n">Shifts</th><th class="n">Avg ${esc(W.toLowerCase())}</th><th class="n">Avg done</th><th class="n">Per ${esc(W.toLowerCase().replace(/s$/,""))}</th><th class="n">Labor hrs / ctr</th><th class="n">Left over</th></tr>
-      ${used.map(v=>`<tr><td>${tag(v.info.id)} <span class="muted">${v.hours?fmt(v.hours)+"h":""}</span></td><td class="n">${v.n}</td><td class="n">${fmt(v.avgLab)}</td><td class="n">${fmt(v.avgComp)}</td><td class="n">${fmt(v.perWorker,2)}</td><td class="n"><b>${fmt(v.lhpc)}</b></td><td class="n">${v.carried}</td></tr>`).join("")}
+      ${used.map(v=>`<tr><td>${tag(v.info.id)} <span class="muted">${v.hours}</span></td><td class="n">${v.n}</td><td class="n">${fmt(v.avgLab)}</td><td class="n">${fmt(v.avgComp)}</td><td class="n">${fmt(v.perWorker,2)}</td><td class="n"><b>${fmt(v.lhpc)}</b></td><td class="n">${v.carried}</td></tr>`).join("")}
     </table></div>
     <div class="pb note" style="margin:0">Labor hrs / container = ${esc(W.toLowerCase())} × scheduled shift hours ÷ containers completed. Lower is faster.${noHours.length?` Add start and end times for ${noHours.map(esc).join(", ")} in Setup to see labor hours.`:""}</div></div>
   <div class="panel"><h2>Containers completed by week</h2><div class="pb">${weekChart()}</div></div>
@@ -421,8 +434,9 @@ function shiftGuess(){
   for (const back of [0,1]){
     const d=new Date(now.getFullYear(), now.getMonth(), now.getDate()-back);
     for (const sh of list){
-      if (!sh.start || !sh.end || (sh.days.length && !sh.days.includes(d.getDay()))) continue;
-      const st=new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, mins(sh.start)), en=new Date(st.getTime()+(durH(sh.start,sh.end)||0)*3600000);
+      const tm = dayTimes(sh, d.getDay());
+      if (!tm.start || !tm.end || (sh.days.length && !sh.days.includes(d.getDay()))) continue;
+      const st=new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, mins(tm.start)), en=new Date(st.getTime()+(durH(tm.start,tm.end)||0)*3600000);
       if (st<=now && now<en) return {date:iso(d), shift:sh.id};
       if (en<=now && now-en<12*3600000 && (!best || now-en<best.gap)) best={gap:now-en, date:iso(d), shift:sh.id};
     }
@@ -519,22 +533,49 @@ function saveEdit(id){
 }
 
 /* ---------- setup & backup ---------- */
-function snapshot(){ const s=S(), raw=DB.settings||{}; return {title:raw.title||"", workerWord:s.workerWord, supportLabel:s.supportLabel, shifts:s.shifts.map(x=>Object.assign({},x,{days:x.days.slice()})), crew:s.crew.map(c=>Object.assign({},c))}; }
+function snapshot(){ const s=S(), raw=DB.settings||{}; return {title:raw.title||"", workerWord:s.workerWord, supportLabel:s.supportLabel, shifts:JSON.parse(JSON.stringify(s.shifts)), crew:s.crew.map(c=>Object.assign({},c))}; }
 function setupDraft(){ if(!DRAFT.setup) DRAFT.setup = snapshot(); return DRAFT.setup; }
 const setupDirty = () => !!DRAFT.setup && JSON.stringify(DRAFT.setup)!==JSON.stringify(snapshot());
 function shiftTotal(x){
-  const h = x.start && x.end ? durH(x.start,x.end) : null, n = x.days.length, dd = n ? `${n} day${n>1?"s":""} a week` : "";
+  const n = x.days.length, dd = n ? `${n} day${n>1?"s":""} a week` : "";
+  if (x.perDay && n){
+    const hs = x.days.map(d=>shiftHours(x,d)), known = hs.filter(Boolean), week = known.reduce((a,h)=>a+h,0);
+    const same = new Set(known).size===1 && known.length===n;
+    if (!known.length) return `${dd} · add times to see the hours`;
+    return `${same?`<b>${fmt(known[0],2)} hrs</b> per shift`:"Hours vary by day"} · ${dd} · <b>${fmt(week,2)} hrs</b> a week${known.length<n?` <span class="muted">(${n-known.length} day${n-known.length>1?"s":""} without times)</span>`:""}`;
+  }
+  const h = x.start && x.end ? durH(x.start,x.end) : null;
   if (h) return `<b>${fmt(h,2)} hrs</b> per shift${n?` · ${dd} · <b>${fmt(h*n,2)} hrs</b> a week`:""}`;
   if (x.hours) return `Counting <b>${fmt(x.hours,2)} hrs</b> per shift until you add start and end times`;
   return n ? `${dd} · add start and end times to see the hours` : "Days and times are optional";
 }
+function dayTotal(x,d){
+  const o = (x.dayTimes||{})[d], h = shiftHours(x,d), t = dayTimes(x,d);
+  const clk = v => { if(!v) return "?"; const [H,M]=v.split(":").map(Number); return (H%12||12)+(M?":"+String(M).padStart(2,"0"):"")+(H<12?"a":"p"); };
+  return (o && (o.start||o.end) ? "" : "Same as usual · ") + (t.start||t.end ? clk(t.start)+"–"+clk(t.end)+" · " : "") + (h ? fmt(h,2)+" hrs" : "no times yet");
+}
+function refreshTotals(i){
+  const x = (DRAFT.setup||snapshot()).shifts[i]; if(!x) return;
+  const el=$("#shtot"+i); if(el) el.innerHTML=shiftTotal(x);
+  for (const d of x.days){ const t=$(`#dtt${i}-${d}`); if(t) t.textContent=dayTotal(x,d); }
+}
 function shiftCard(x,i){
+  const dt = x.dayTimes||{};
+  const perDay = !x.perDay ? "" : x.days.length ? `<div class="perday">${x.days.map(d=>`<div class="dayrow">
+      <b>${DAYS[d]}</b>
+      <input type="time" data-sh="${i}" data-k="dt:${d}:start" value="${esc((dt[d]||{}).start||"")}" aria-label="${DAYS[d]} start">
+      <input type="time" data-sh="${i}" data-k="dt:${d}:end" value="${esc((dt[d]||{}).end||"")}" aria-label="${DAYS[d]} end">
+      <span class="dtt" id="dtt${i}-${d}">${dayTotal(x,d)}</span></div>`).join("")}
+      <p class="note" style="margin-top:6px">Leave a day blank to use the usual hours.</p></div>`
+    : `<p class="note">Pick the shift's days above, then set custom hours for any of them.</p>`;
   return `<div class="shcard">
     <div class="hd"><div><label for="shn${i}">What shift is this?</label><input id="shn${i}" data-sh="${i}" data-k="name" value="${esc(x.name)}" placeholder="e.g. 1st shift, Night shift" autocomplete="off"></div>
       <button class="x" data-shrm="${i}" aria-label="Remove this shift" style="margin-bottom:4px">✕</button></div>
     <label>Days</label><div class="days">${DAYS.map((d,j)=>`<button data-day="${i}:${j}" class="${x.days.includes(j)?"on":""}" aria-pressed="${x.days.includes(j)}">${d}</button>`).join("")}</div>
-    <div class="grid2"><div><label for="shs${i}">Starts</label><input type="time" id="shs${i}" data-sh="${i}" data-k="start" value="${esc(x.start)}"></div>
-      <div><label for="she${i}">Ends</label><input type="time" id="she${i}" data-sh="${i}" data-k="end" value="${esc(x.end)}"></div></div>
+    <div class="grid2"><div><label for="shs${i}">${x.perDay?"Usual start":"Starts"}</label><input type="time" id="shs${i}" data-sh="${i}" data-k="start" value="${esc(x.start)}"></div>
+      <div><label for="she${i}">${x.perDay?"Usual end":"Ends"}</label><input type="time" id="she${i}" data-sh="${i}" data-k="end" value="${esc(x.end)}"></div></div>
+    <label class="check" style="margin-top:10px"><input type="checkbox" data-perday="${i}" ${x.perDay?"checked":""}> Custom hours for certain days</label>
+    ${perDay}
     <div class="tot" id="shtot${i}">${shiftTotal(x)}</div></div>`;
 }
 function viewData(){
@@ -569,8 +610,8 @@ function viewData(){
     <span class="row">${dirty&&!first?`<button class="sm ghost" id="sDiscard">Discard</button>`:""}<button class="pri" id="sSave">${first?"Save and start":"Save setup"}</button></span></div></div>
   <div class="panel"><h2>Backup</h2><div class="pb">
     <p>Everything is stored <b>only in this browser on this device</b>. Save a backup now and then, and use it to move your setup and history to another device.</p>
-    <div class="row"><button class="pri" id="bExport">Save backup</button><label class="chip" style="margin:0;text-transform:none;letter-spacing:0;font-size:13px;color:var(--text)">Load backup / pack<input type="file" id="bImport" accept=".json,application/json" style="display:none"></label><button class="sm" id="bCopy">Copy week summary</button></div>
-    <p class="note">On this device: ${(DB.base||[]).length} shifts from a pack · ${Object.keys(DB.shifts).length} added or edited · ${DB.containers.length} doors.${s.source?" Pack: "+esc(s.source):""}</p>
+    <div class="row"><button class="pri" id="bExport">Save backup</button><label class="chip" style="margin:0;text-transform:none;letter-spacing:0;font-size:13px;color:var(--text)">Load backup<input type="file" id="bImport" accept=".json,application/json" style="display:none"></label><button class="sm" id="bCopy">Copy week summary</button></div>
+    <p class="note">On this device: ${allShifts().length} shift${allShifts().length===1?"":"s"} · ${DB.containers.length} door${DB.containers.length===1?"":"s"}.</p>
     ${clearBox}
   </div></div>`;
 }
@@ -582,7 +623,12 @@ function saveSetup(){
   if (new Set(names).size!==names.length){ toast("Two shifts have the same name"); return; }
   const first = isBlank(), ids = new Set(shifts.map(x=>x.id));
   const st = Object.assign({}, DB.settings, {title:d.title.trim(), workerWord:d.workerWord.trim()||"Workers", supportLabel:d.supportLabel.trim()||"Support",
-    shifts: shifts.map(x=>({id:x.id, name:x.name.trim(), days:x.days.slice().sort((a,b)=>a-b), start:x.start, end:x.end, hours:x.start&&x.end?null:x.hours})),
+    shifts: shifts.map(x=>{
+      const days=x.days.slice().sort((a,b)=>a-b), dt={};
+      if (x.perDay) for (const d of days){ const o=(x.dayTimes||{})[d]; if(o && (o.start||o.end)) dt[d]={start:o.start||"", end:o.end||""}; }
+      const anyTimes = (x.start&&x.end) || Object.keys(dt).length;
+      return {id:x.id, name:x.name.trim(), days, start:x.start, end:x.end, perDay:!!x.perDay, dayTimes:dt, hours:anyTimes?null:x.hours};
+    }),
     crew: d.crew.map(c=>({name:c.name, shift:ids.has(c.shift)?c.shift:""}))});
   delete st.hours;
   DB.settings = st; save(); delete DRAFT.setup; saveDraft(); renderRange();
@@ -611,7 +657,7 @@ function importData(file){
     DB.shifts=Object.assign(DB.shifts, d.shifts||{}); DB.deleted=[...new Set(DB.deleted.concat(d.deleted||[]))];
     const have=new Set(DB.containers.map(c=>c.id)); DB.containers=DB.containers.concat((d.containers||[]).filter(c=>!have.has(c.id)));
     delete DRAFT.setup; saveDraft(); save(); renderRange(); toast("Loaded"); if(TAB==="data" && allShifts().length) go("dash"); else render();
-  }catch(e){ toast("That file isn't a Shift Board backup or pack"); } }; r.readAsText(file);
+  }catch(e){ toast("That file isn't a Shift Board backup"); } }; r.readAsText(file);
 }
 function weekSummary(){
   const w = $("#range").value==="all" ? weekStart(iso(new Date())) : $("#range").value, t=byType(allShifts().filter(s=>weekStart(s.date)===w)), W=S().workerWord.toLowerCase();
@@ -649,7 +695,7 @@ document.addEventListener("click", e=>{
       PICK.add(crewList().find(x=>x.toLowerCase()===n.toLowerCase())||n); DRAFT.pick=[...PICK]; delete DRAFT.f.newName; saveDraft(); render(); break; }
     case "nowStart": $("#cStart").value=DRAFT.f.cStart=new Date().toTimeString().slice(0,5); saveDraft(); break;
     case "nowEnd": $("#cEnd").value=DRAFT.f.cEnd=new Date().toTimeString().slice(0,5); saveDraft(); break;
-    case "shAdd": { const d=setupDraft(); d.shifts.push({id:uid(), name:"", days:[], start:"", end:"", hours:null}); saveDraft(); render(); const el=$("#shn"+(d.shifts.length-1)); if(el){ el.focus(); el.scrollIntoView({block:"center"}); } break; }
+    case "shAdd": { const d=setupDraft(); d.shifts.push({id:uid(), name:"", days:[], start:"", end:"", perDay:false, dayTimes:{}, hours:null}); saveDraft(); render(); const el=$("#shn"+(d.shifts.length-1)); if(el){ el.focus(); el.scrollIntoView({block:"center"}); } break; }
     case "crewAdd": crewAdd(); break;
     case "sSave": saveSetup(); break;
     case "sDiscard": delete DRAFT.setup; saveDraft(); render(); toast("Changes discarded"); break;
@@ -665,7 +711,11 @@ function onField(e){
   const el=e.target;
   if (DRAFT_FIELDS.includes(el.id)){ DRAFT.f[el.id]=el.value; saveDraft(); if(el.id==="pasteTxt") updatePreview(true); else if(el.id==="pShift"||el.id==="pKind") updatePreview(false); return; }
   if (el.dataset.sf){ setupDraft()[el.dataset.sf]=el.value; saveDraft(); return; }
-  if (el.dataset.sh){ const x=setupDraft().shifts[+el.dataset.sh]; x[el.dataset.k]=el.value; saveDraft(); const tot=$("#shtot"+el.dataset.sh); if(tot) tot.innerHTML=shiftTotal(x); return; }
+  if (el.dataset.perday){ const x=setupDraft().shifts[+el.dataset.perday]; x.perDay=el.checked; x.dayTimes=x.dayTimes||{}; saveDraft(); render(); return; }
+  if (el.dataset.sh){ const i=+el.dataset.sh, x=setupDraft().shifts[i], k=el.dataset.k;
+    if (k.startsWith("dt:")){ const [,d,part]=k.split(":"); x.dayTimes=x.dayTimes||{}; const o=x.dayTimes[d]=Object.assign({start:"",end:""}, x.dayTimes[d]); o[part]=el.value; if(!o.start&&!o.end) delete x.dayTimes[d]; }
+    else x[k]=el.value;
+    saveDraft(); refreshTotals(i); return; }
   if (el.dataset.crewsh){ setupDraft().crew[+el.dataset.crewsh].shift=el.value; saveDraft(); return; }
   if (el.id==="crewNew"){ DRAFT.crewNew=el.value; saveDraft(); }
 }
@@ -673,7 +723,7 @@ document.addEventListener("input", onField);
 document.addEventListener("change", e=>{
   if (e.target.id==="range"){ OPEN=null; render(); return; }
   if (e.target.id==="bImport" && e.target.files[0]){ importData(e.target.files[0]); return; }
-  if (e.target.tagName==="SELECT") onField(e);
+  if (e.target.tagName==="SELECT" || e.target.dataset.perday!=null) onField(e);
 });
 document.addEventListener("keydown", e=>{
   if (e.key!=="Enter") return;
