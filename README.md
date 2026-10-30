@@ -19,6 +19,7 @@ A simple, private shift logger for warehouse crews. Log each shift's start and e
 ## What it does
 
 - **Overview:** containers completed, labor hours per container, shift vs shift comparison, weekly chart, fastest and slowest shifts.
+- **Walk:** follow a shift live. Swipe through the doors to log each container, put your crew on doors from a live board with door timers, then save the end-of-day numbers. Finished doors save to the same door logs as the Log page (rollovers save just the part unloaded), and every logged door's times can be edited afterward.
 - **Shifts:** every logged shift, sortable and ranked. Tap a shift to see its reports and edit numbers.
 - **People:** rankings built from door logs: pieces credited, pieces per hour, containers credited, person-hours per container.
 - **Log:** paste a start or end-of-day report and the numbers are read for you, or log a single door (door, piece count, crew, start and end time).

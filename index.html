@@ -106,6 +106,93 @@ textarea{min-height:130px;resize:vertical}
 .empty{padding:22px;text-align:center;color:var(--muted)}
 svg text{fill:var(--muted);font-size:10px}
 @media (max-width:480px){ th,td{padding:7px 8px} .top{padding:10px 12px 6px} main{padding:12px} }
+/* ---------- live walk ---------- */
+#toast{z-index:40}
+.wtop{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.wtop .day{font-weight:700}
+.wseg{display:flex;gap:2px;background:var(--panel2);border:1px solid var(--line);border-radius:var(--r);padding:2px}
+.wseg button{border:0;background:transparent;padding:6px 14px;font-weight:600;color:var(--muted)}
+.wseg button.on{background:var(--panel);color:var(--text);box-shadow:0 0 0 1px var(--line)}
+.wstrip{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;padding:2px 0 8px}
+.wstrip::-webkit-scrollbar{display:none}
+.wstrip button{flex:0 0 auto;min-width:46px;padding:6px 0;font-size:12px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--muted)}
+.wstrip button.cur{border-color:var(--accent);color:var(--text);box-shadow:inset 0 0 0 1px var(--accent)}
+.wstrip button.s-none{opacity:.45}
+.wstrip button.s-full{color:var(--s1)} .wstrip button.s-partial{color:var(--s3)} .wstrip button.s-active{color:var(--good)}
+.wstrip button.s-empty{border-style:dashed}
+.wstrip i{flex:0 0 1px;background:var(--line);margin:0 4px}
+.wmeta{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:6px}
+.wcard{position:relative;touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab;background:var(--panel);border:1px solid var(--line);border-radius:12px;min-height:250px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px 16px 46px;transition:transform .22s ease,opacity .2s;margin:4px auto 12px;max-width:420px}
+.wcard.drag{transition:none;cursor:grabbing}
+.wcard .lab{color:var(--muted);font-size:13px}
+.wcard .num{font-size:clamp(84px,28vw,130px);font-weight:700;line-height:1;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.wcard .st{color:var(--muted);margin-top:10px;min-height:2.6em;text-align:center;max-width:26ch}
+.wcard .hint{position:absolute;left:16px;right:16px;bottom:14px;display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+.wcard .tg{position:absolute;top:14px;padding:4px 10px;border-radius:999px;font-weight:700;font-size:13px;pointer-events:none}
+.wcard .tg.l{right:14px;background:var(--panel2);opacity:var(--pl,0)}
+.wcard .tg.r{left:14px;background:var(--accent);color:var(--on-accent);opacity:var(--pr,0)}
+.wbtns{display:grid;grid-template-columns:1fr 1fr;gap:8px;max-width:420px;margin:0 auto}
+.wbtns button{padding:14px 0;font-size:15px;font-weight:600}
+.wsub{display:flex;justify-content:space-between;align-items:center;max-width:420px;margin:8px auto 0;font-size:13px;color:var(--muted)}
+.wdoor{display:grid;grid-template-columns:52px minmax(0,1fr);gap:10px;padding:12px 14px;border-bottom:1px solid var(--line);cursor:pointer}
+.wdoor:last-child{border-bottom:0}
+.wdoor:hover{background:var(--panel2)}
+.wdoor .dn{font-size:21px;font-weight:700;font-variant-numeric:tabular-nums;line-height:22px}
+.wdoor.s-done .dn,.wdoor.s-empty .dn{color:var(--muted);font-weight:500}
+.wdoor .mn{min-width:0;display:flex;flex-direction:column;gap:7px}
+.wdoor .tp{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.wdot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;background:var(--muted)}
+.k-active{background:var(--good)} .k-partial{background:var(--s3)} .k-full{background:var(--s1)} .k-done{background:var(--muted)} .k-empty{background:transparent;box-shadow:inset 0 0 0 1.5px var(--muted)}
+.wst{font-weight:600;font-size:13px}
+.s-active .wst{color:var(--good)} .s-partial .wst{color:var(--s3)} .s-full .wst{color:var(--s1)} .s-done .wst,.s-empty .wst{color:var(--muted)}
+.wtime{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.wbar{display:flex;align-items:center;gap:8px}
+.wbar .tr{flex:1;height:7px;border-radius:4px;background:var(--panel2);overflow:hidden;position:relative}
+.wbar .fl{position:absolute;inset:0 auto 0 0;background:#c8a777}
+.wbar span{font-size:12px;color:var(--muted);min-width:4.6em;text-align:right;font-variant-numeric:tabular-nums}
+.wfacts{font-size:13px;color:var(--muted)}
+.wfacts .need{color:var(--accent);font-weight:600}
+.wcrew{display:flex;flex-wrap:wrap;gap:4px}
+.wchip{border-radius:999px;padding:4px 11px;background:var(--panel2);border:1px solid var(--line);font-size:13px;font-weight:500;cursor:pointer}
+.wchip.sel,.wchip.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.wslot{border:1px dashed var(--line);border-radius:999px;padding:3px 11px;font-size:12px;color:var(--muted)}
+body.wsel .wdoor.s-active .wslot,body.wsel .wdoor.s-partial .wslot,body.wsel .wdoor.s-full .wslot{border-color:var(--accent);color:var(--text)}
+body.w-hasbench main{padding-bottom:120px}
+.wbench{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--panel);border-top:1px solid var(--line);padding:8px 12px calc(8px + env(safe-area-inset-bottom,0px));display:flex;gap:10px;align-items:center}
+.wbench .bl{font-size:12px;color:var(--muted);white-space:nowrap}
+.wbench .bl b{color:var(--text)}
+.wbench .bc{flex:1;min-width:0;display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;padding:2px 0}
+.wbench .bc::-webkit-scrollbar{display:none}
+.wbench .bc .wchip{flex:0 0 auto}
+.whint{position:fixed;left:12px;right:12px;bottom:calc(58px + env(safe-area-inset-bottom,0px));z-index:7;background:var(--text);color:var(--bg);border-radius:var(--r);padding:8px 10px 8px 14px;font-size:13px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.whint button{background:transparent;border:0;color:var(--bg);text-decoration:underline}
+#wsheet{position:fixed;inset:0;z-index:20}
+#wsheet .bk{position:absolute;inset:0;background:rgba(0,0,0,.45)}
+#wsheet .sh{position:absolute;left:0;right:0;bottom:0;max-width:640px;margin:0 auto;max-height:90vh;overflow-y:auto;overscroll-behavior:contain;background:var(--panel);border:1px solid var(--line);border-bottom:0;border-radius:12px 12px 0 0;padding:14px 16px calc(18px + env(safe-area-inset-bottom,0px))}
+#wsheet .hd{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+#wsheet .hd h3{flex:1;margin:0;font-size:18px}
+#wsheet .sec{border-top:1px solid var(--line);padding:10px 0;margin-top:6px}
+#wsheet .sec:first-of-type{border-top:0}
+.cbar{user-select:none;-webkit-user-select:none}
+.cbar .rd{display:flex;justify-content:space-between;align-items:baseline}
+.cbar .rd b{font-size:22px}
+.cbar .tk{position:relative;height:56px;border-radius:10px 4px 4px 10px;background:var(--panel2);border:1px solid var(--line);overflow:hidden;touch-action:none;cursor:pointer;margin-top:6px}
+.cbar .tk .fl{position:absolute;inset:0 auto 0 0;background-color:#c8a777;background-image:linear-gradient(90deg,rgba(90,60,20,.22) 1px,transparent 1px),linear-gradient(180deg,rgba(90,60,20,.22) 1px,transparent 1px);background-size:14px 14px}
+.cbar .tk i{position:absolute;top:10px;bottom:10px;width:1px;background:var(--line)}
+.cbar .ends{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:4px}
+.wq{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;margin-top:8px}
+.wq button{padding:8px 0;font-weight:600}
+.wq button.on,.wsg button.on{background:var(--text);color:var(--bg);border-color:var(--text)}
+.wsg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
+.wsg button{padding:9px 0;font-weight:600}
+.wkv{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.wkv span{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.wkv b{font-variant-numeric:tabular-nums}
+.wstack{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.wstack button{padding:12px 0;font-weight:600}
+.wreport{white-space:pre-wrap;margin:0;font:15px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--panel2);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px}
+.wdone{text-align:center;padding:20px 14px}
+.wdone .big{font-size:56px;font-weight:700;line-height:1}
 </style>
 </head>
 <body>
@@ -273,7 +360,7 @@ function parseReport(text){
 
 /* ---------------- views ---------------- */
 let TAB = "dash", SORT = {k:"lhpc", dir:1}, OPEN = null, SHIFTF = "all", PICK = new Set(DRAFT.pick||[]), CLEARING = false;
-const TABS = [["dash","Overview"],["shifts","Shifts"],["workers","People"],["log","Log"],["data","Setup"]];
+const TABS = [["dash","Overview"],["walk","Walk"],["shifts","Shifts"],["workers","People"],["log","Log"],["data","Setup"]];
 function lbl(){ const s=S(); return {lumpers:s.workerWord.toLowerCase(),lumpersOther:"from other shift",containers:"containers",completed:"completed",carried:"left over",osEpj:s.supportLabel,yard:"yard count",shipping:"shipping",sentHome:"sent home",yardContainers:"in yard"}; }
 const fields2txt = f => { const L=lbl(); return Object.entries(f||{}).map(([k,v])=>`${v} ${L[k]||k}`).join(" · "); };
 
@@ -293,7 +380,8 @@ const DRAFT_FIELDS = ["pasteTxt","pDate","pShift","pKind","cDate","cShift","cDoo
 function render(){
   _SA = null;
   renderHead();
-  $("#main").innerHTML = ({dash:viewDash, shifts:viewShifts, workers:viewWorkers, log:viewLog, data:viewData})[TAB]();
+  $("#main").innerHTML = ({dash:viewDash, walk:viewWalk, shifts:viewShifts, workers:viewWorkers, log:viewLog, data:viewData})[TAB]();
+  if (TAB==="walk") wAfter(); else wClear();
   if (TAB==="log"){
     for (const id of DRAFT_FIELDS){ const el=$("#"+id), v=DRAFT.f[id]; if(el && v!=null && [...(el.options||[{value:v}])].some(o=>o.value===v)) el.value=v; }
     updatePreview(false);
@@ -665,6 +753,455 @@ function weekSummary(){
   for (const v of Object.values(t)) if(v.n) out+=`${v.info.name}: ${v.n} shifts, ${v.comp} containers, ${fmt(v.perWorker,2)} per ${W.replace(/s$/,"")}, ${fmt(v.lhpc)} labor hrs/container\n`;
   return out;
 }
+
+/* ---------------- live walk ----------------
+   Walk the dock door by door, run the shift from a live board, then save the EOD.
+   Finished doors are saved into the same door records the Log page uses (DB.containers),
+   and the EOD numbers into the same shift record, so live and after-the-fact logging mix freely. */
+const WALK_DOORS = "111-149, 200-249";
+const W_MAX = 5;
+const W_BOX = {big:"Big", small:"Small", mixed:"Mixed"};
+const W_FLOOR = {tight:"Tight", okay:"Okay", open:"Open"};
+const W_ST = {active:"Active", partial:"Partial", full:"Full", done:"Done", empty:"Empty trailer"};
+const W_LOGST = {done:"Completed", rolled:"Rolled over", pickup:"Finished a rollover"};
+let WV = {mode:"walk", sel:null, sheet:null, draft:null, edit:null, confirm:null, start:null, cardIn:false};
+
+const wcfg = () => (DB.walkCfg = DB.walkCfg || {doors:WALK_DOORS});
+function wParse(str){
+  const out=[], seen=new Set();
+  String(str||"").split(/[,;\n]+/).forEach(part=>{
+    const m=part.trim().match(/^(\d{1,4})(?:\s*(?:-|–|to)\s*(\d{1,4}))?$/i); if(!m) return;
+    let a=+m[1], b=m[2]!=null?+m[2]:a; if(b<a){ const x=a; a=b; b=x; } if(b-a>500) return;
+    for(let d=a; d<=b; d++) if(!seen.has(d)){ seen.add(d); out.push(d); }
+  });
+  return out;
+}
+const wDoors = () => { const l=wParse(wcfg().doors); return l.length?l:wParse(WALK_DOORS); };
+const hhmm = ts => { const d=new Date(ts); return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); };
+const wClk = ts => { const d=new Date(ts); const h=d.getHours(); return (h%12||12)+":"+String(d.getMinutes()).padStart(2,"0")+(h<12?"a":"p"); };
+const wDur = ms => { const m=Math.max(0,Math.round(ms/60000)), h=Math.floor(m/60); return h?h+"h "+(m%60)+"m":m+"m"; };
+const L = () => DB.walk || null;
+const wc = d => { const l=L(), r=l&&l.doors[d]; return r?r.c:null; };
+const wNew = () => ({left:100, initialLeft:100, empty:false, boxes:null, floor:null, blind:false, pieces:"", skus:"", trailer:"", note:"", workers:[], segs:[], dsegs:[], firstStart:null, doneAt:null, logId:null});
+const wWork = c => !!(c && (c.firstStart || c.doneAt || c.workers.length));
+const wStarted = c => !!(c.firstStart || c.initialLeft<100 || c.left<100);
+function wStatus(c){ if(c.empty) return "empty"; if(c.doneAt) return "done"; if(c.workers.length) return "active"; if(wStarted(c)) return "partial"; return "full"; }
+const wLeft = v => v>=100?"Full":v<=0?"Empty":v+"% left";
+const wWorked = (c,t) => c.dsegs.reduce((a,s)=>a+((s.e||t||Date.now())-s.s),0);
+function wAssign(c,n,t){ if(c.workers.includes(n)) return; if(!c.workers.length){ c.dsegs.push({s:t,e:null}); if(!c.firstStart) c.firstStart=t; } c.workers.push(n); c.segs.push({p:n,s:t,e:null}); }
+function wUnassign(c,n,t){
+  if(!c || !c.workers.includes(n)) return;
+  c.workers=c.workers.filter(x=>x!==n);
+  for(let i=c.segs.length-1;i>=0;i--){ const s=c.segs[i]; if(s.p===n && !s.e){ s.e=t; break; } }
+  if(!c.workers.length){ const d=c.dsegs[c.dsegs.length-1]; if(d && !d.e) d.e=t; }
+}
+function wDoorOf(n){ const l=L(); if(!l) return null; for(const k in l.doors){ const c=l.doors[k].c; if(c && c.workers.includes(n)) return +k; } return null; }
+function wBench(){ const l=L(); if(!l) return []; const busy=new Set(); Object.values(l.doors).forEach(r=>{ if(r.c) r.c.workers.forEach(n=>busy.add(n)); }); return l.here.filter(n=>!busy.has(n)); }
+
+/* ---- saving into the Log's door records ---- */
+function wRecord(door, c, status, endTs){
+  const l=L(), share = status==="rolled" ? c.initialLeft-c.left : c.initialLeft;
+  const tot = c.pieces===""||c.pieces==null ? null : +c.pieces;
+  return {date:l.date, shift:l.shift, door:String(door), trailer:c.trailer||"",
+    pieces: tot!=null && share>0 ? String(Math.round(tot*share/100)) : "",
+    status, start: c.firstStart?hhmm(c.firstStart):"", end: endTs?hhmm(endTs):"",
+    crew:[...new Set(c.segs.map(s=>s.p))], notes:c.note||"", src:"walk"};
+}
+function wLog(door, c, status, endTs){
+  const rec=wRecord(door,c,status,endTs), old=c.logId && DB.containers.find(x=>x.id===c.logId);
+  if (old){ const keep = old.edited ? {start:old.start, end:old.end} : {}; Object.assign(old, rec, keep); }
+  else { rec.id=uid(); DB.containers.push(rec); c.logId=rec.id; }
+}
+const wDoneStatus = c => c.initialLeft<100 ? "pickup" : "done";
+function wRelog(door){ const c=wc(door); if(c && c.doneAt && c.logId) wLog(door, c, wDoneStatus(c), c.doneAt); }
+
+/* ---- shift start / end ---- */
+function wStartShift(){
+  const s=WV.start; if(!s.shift){ toast("Add a shift in Setup first"); return; }
+  DB.walk={id:uid(), date:s.date, shift:s.shift, startedAt:Date.now(), pos:0, doors:{}, past:[], here:[...s.here], eod:{}};
+  WV.mode="walk"; WV.sel=null; WV.start=null; WV.cardIn=true; save(); render(); window.scrollTo(0,0);
+  toast("Walk started. Swipe through the doors.");
+}
+function wEod(){
+  const l=L(), cs=Object.values(l.doors).map(r=>r.c).filter(c=>c && !c.empty).concat(l.past||[]);
+  const auto={lumpers:l.here.length, completed:cs.filter(c=>c.doneAt).length, carried:cs.filter(c=>!c.doneAt && wStarted(c)).length,
+    rollDoors:Object.keys(l.doors).filter(d=>{ const c=l.doors[d].c; return c && !c.empty && !c.doneAt && wStarted(c); })};
+  const e=l.eod||{};
+  return {auto, lumpers:e.lumpers??auto.lumpers, completed:e.completed??auto.completed, carried:e.carried??auto.carried};
+}
+function wReport(){
+  const l=L(), v=wEod(), ww=S().workerWord, one=ww.replace(/s$/i,""), title=(DB.settings.title||"").trim();
+  return [((title?title+" ":"")+shiftName(l.shift)).trim()+" EOD", v.lumpers+" "+(v.lumpers===1?one:ww),
+    v.completed+" container"+(v.completed===1?"":"s")+" completed", v.carried+" rollover"+(v.carried===1?"":"s")].join("\n");
+}
+function wEndShift(){
+  const l=L(), t=Date.now(), v=wEod(), text=wReport();
+  Object.entries(l.doors).forEach(([d,r])=>{ const c=r.c; if(!c) return; c.workers.slice().forEach(n=>wUnassign(c,n,t)); if(!c.doneAt && !c.empty && c.firstStart) wLog(+d, c, "rolled", t); });
+  const id=l.date+"_"+l.shift;
+  const s=JSON.parse(JSON.stringify(allShifts().find(x=>x.id===id) || {id, date:l.date, shift:l.shift, start:{}, eod:{}, reports:[]}));
+  s.eod=Object.assign({}, s.eod, {lumpers:v.lumpers, completed:v.completed, carried:v.carried});
+  s.reports=(s.reports||[]).concat([{who:"Walk", at:new Date().toISOString().slice(0,16), kind:"EOD", text}]);
+  delete s.edited; DB.shifts[id]=s; DB.deleted=DB.deleted.filter(x=>x!==id);
+  DB.walk=null; WV.confirm=null; WV.sel=null; WV.sheet=null; save(); renderRange(); render(); window.scrollTo(0,0);
+  toast("Shift saved. It's on the Shifts page.");
+}
+
+/* ---- views ---- */
+function viewWalk(){ return L() ? wLiveView() : wStartView(); }
+function wShiftOptions(sel){ return shiftsAll().map(x=>`<option value="${esc(x.id)}" ${x.id===sel?"selected":""}>${esc(x.name)}</option>`).join(""); }
+function wStartView(){
+  if (!shiftsAll().length) return `<div class="panel"><h2>Dock walk</h2><div class="pb"><p>Add the shifts you run in Setup first, then come back to start a walk.</p><div class="row"><button class="pri" data-tab="data">Go to Setup</button></div></div></div>`;
+  if (!WV.start){ const g=shiftGuess(); WV.start={date:g.date, shift:g.shift||shiftsAll()[0].id, here:null}; }
+  const s=WV.start;
+  if (!s.here) s.here=new Set(S().crew.filter(c=>!c.shift || c.shift===s.shift).map(c=>c.name));
+  const names=crewList(), n=wDoors().length;
+  return `<div class="panel"><h2>Start a dock walk</h2><div class="pb">
+    <div class="grid2"><div><label>Shift date</label><input type="date" data-wf="s:date" value="${esc(s.date)}"></div>
+      <div><label>Shift</label><select data-wf="s:shift">${wShiftOptions(s.shift)}</select></div></div>
+    <label>Doors on the walk <span style="text-transform:none">(${n} doors, in walking order)</span></label>
+    <input data-wf="doors" value="${esc(wcfg().doors)}" placeholder="e.g. 111-149, 200-249">
+    <label>Who's here <span style="text-transform:none">(${s.here.size} of ${names.length}, tap to change)</span></label>
+    <div class="wcrew">${names.map(x=>`<span class="wchip ${s.here.has(x)?"on":""}" data-w="here" data-n="${esc(x)}">${esc(x)}</span>`).join("")||`<span class="muted">Add your crew in Setup.</span>`}</div>
+    <div class="row" style="margin-top:14px"><button class="pri" data-w="start">Start the walk</button></div>
+    <p class="note">Doors save to your logged doors as they finish, and the EOD saves to this shift when you end it. The Log page still works the same if you'd rather enter things later.</p>
+  </div></div>${wLoggedHTML(s.date, s.shift)}`;
+}
+function wLiveView(){
+  const l=L(), modes=[["walk","Walk"],["board","Board"],["eod","EOD"]];
+  const top=`<div class="wtop"><div><span class="day">${dayLbl(l.date)}</span> ${tag(l.shift)}</div>
+    <div class="wseg">${modes.map(([k,t])=>`<button class="${WV.mode===k?"on":""}" data-w="mode" data-m="${k}">${t}</button>`).join("")}</div></div>`;
+  return top + (WV.mode==="board" ? wBoardHTML() : WV.mode==="eod" ? wEodHTML() : wWalkHTML());
+}
+function wStripHTML(doors, pos){
+  const l=L(); let h="", prev=null;
+  doors.forEach((d,i)=>{
+    if(prev!=null && d!==prev+1) h+=`<i></i>`;
+    const r=l.doors[d], st=r ? (r.c ? wStatus(r.c) : "none") : "";
+    h+=`<button class="${st?"s-"+st:""} ${i===pos?"cur":""}" data-w="jump" data-i="${i}">${d}</button>`; prev=d;
+  });
+  const walked=doors.filter(d=>l.doors[d]).length, cont=doors.filter(d=>l.doors[d] && l.doors[d].c && !l.doors[d].c.empty).length;
+  return `<div class="wmeta"><span>${walked} of ${doors.length} walked</span><span>${cont} container${cont===1?"":"s"} so far</span></div><div class="wstrip" id="wstrip">${h}</div>`;
+}
+function wDescribe(c){
+  if (c.empty) return "Logged as an empty trailer";
+  const b=[wLeft(c.left).toLowerCase()]; if(c.boxes) b.push(W_BOX[c.boxes].toLowerCase()+" boxes"); if(c.floor) b.push(W_FLOOR[c.floor].toLowerCase()+" floor"); if(c.blind) b.push("can't see in");
+  return "Logged: "+b.join(", ");
+}
+function wWalkHTML(){
+  const l=L(), doors=wDoors(), pos=Math.max(0,Math.min(l.pos|0, doors.length));
+  if (pos>=doors.length){
+    const recs=doors.map(d=>l.doors[d]), cont=recs.filter(r=>r && r.c && !r.c.empty), full=cont.filter(r=>r.c.initialLeft>=100).length;
+    const skipped=doors.filter(d=>!l.doors[d]);
+    return wStripHTML(doors,pos)+`<div class="panel"><div class="wdone"><div class="muted">Walk done</div><div class="big">${cont.length}</div><div class="muted">container${cont.length===1?"":"s"} to work: ${full} full, ${cont.length-full} partial</div>
+      <div class="row" style="justify-content:center;margin-top:14px">${skipped.length?`<button data-w="jump" data-i="${doors.indexOf(skipped[0])}">Go to skipped door ${skipped[0]}</button>`:""}<button class="pri" data-w="mode" data-m="board">Go to the board</button></div>
+      <p class="note">Walk again any time by tapping a door number above.</p></div></div>`;
+  }
+  const d=doors[pos], r=l.doors[d], st=r ? (r.c ? wDescribe(r.c) : "Logged: nothing at this door") : "Not walked yet";
+  const anim=WV.cardIn; WV.cardIn=false;
+  return wStripHTML(doors,pos)+`<div class="wcard" id="wcard" style="${anim?"opacity:.4;transform:translateY(8px)":""}" tabindex="0" aria-label="Door ${d}">
+      <span class="tg l">Nothing</span><span class="tg r">Trailer</span>
+      <div class="lab">Door</div><div class="num">${d}</div><div class="st">${esc(st)}</div>
+      <div class="hint"><span>‹ Nothing</span><span>Trailer ›</span></div></div>
+    <div class="wbtns"><button data-w="none">Nothing</button><button class="pri" data-w="trailer">Trailer</button></div>
+    <div class="wsub"><button class="sm ghost" data-w="back" ${pos===0?"disabled":""}>Back</button><span>Door ${pos+1} of ${doors.length}</span><button class="sm ghost" data-w="skip">Skip</button></div>`;
+}
+function wTimeText(c,t){
+  const st=wStatus(c);
+  if (st==="active") return wDur(wWorked(c,t))+" since "+wClk(c.firstStart);
+  if (st==="done") return (c.firstStart?wDur(wWorked(c,t))+", ":"")+"done "+wClk(c.doneAt);
+  if (c.firstStart) return wDur(wWorked(c,t))+" worked";
+  return "";
+}
+function wChip(n, from){ return `<span class="wchip ${WV.sel===n?"sel":""}" data-w="pick" data-n="${esc(n)}">${esc(n)}</span>`; }
+function wRowHTML(d, c){
+  const st=wStatus(c), t=Date.now();
+  const head=`<div class="tp"><span class="wst"><i class="wdot k-${st}"></i>${W_ST[st]}</span><span class="wtime" data-wt="${d}">${st==="empty"?"Waiting to be pulled":wTimeText(c,t)}</span></div>`;
+  if (st==="empty") return `<div class="wdoor s-empty" data-w="door" data-d="${d}"><span class="dn">${d}</span><div class="mn">${head}</div></div>`;
+  const load=[c.boxes?W_BOX[c.boxes]+" boxes":"", c.floor?W_FLOOR[c.floor].toLowerCase()+" floor":""].filter(Boolean).join(", ");
+  const facts=[load, c.pieces!==""?(+c.pieces).toLocaleString()+" pcs"+(c.skus!==""?", "+c.skus+" SKUs":""):`<span class="need">Needs pieces</span>`, c.blind?"can't see in":""].filter(Boolean).join(" · ");
+  const crew = st==="done" ? `<div class="wfacts">${esc([...new Set(c.segs.map(s=>s.p))].join(", "))}</div>`
+    : `<div class="wcrew">${c.workers.map(n=>wChip(n,d)).join("")||`<span class="wslot">${WV.sel?"Tap to put "+esc(WV.sel)+" here":"Tap a name below, then this door"}</span>`}</div>`;
+  return `<div class="wdoor s-${st}" data-w="door" data-d="${d}"><span class="dn">${d}</span><div class="mn">${head}
+    ${st==="done"?"":`<div class="wbar"><div class="tr"><div class="fl" style="width:${c.left}%"></div></div><span>${wLeft(c.left)}</span></div>`}
+    <div class="wfacts">${facts}</div>${c.note?`<div class="wfacts">Note: ${esc(c.note)}</div>`:""}${crew}</div></div>`;
+}
+function wBoardHTML(){
+  const l=L(), items=Object.keys(l.doors).map(Number).sort((a,b)=>a-b).filter(d=>l.doors[d].c);
+  const order={active:0, partial:1, full:2, empty:3, done:4};
+  items.sort((a,b)=>order[wStatus(wc(a))]-order[wStatus(wc(b))] || a-b);
+  return `<div class="panel"><h2>Doors <small>${items.length} on the board</small><span style="flex:1"></span><button class="sm" data-w="add">+ Add container</button></h2>
+    ${items.length?items.map(d=>wRowHTML(d,wc(d))).join(""):`<div class="empty">Nothing on the board yet. Walk the dock and every trailer you log shows up here.</div>`}</div>
+    ${wLoggedHTML(l.date, l.shift)}`;
+}
+function wEodHTML(){
+  const l=L(), v=wEod(), ww=S().workerWord, e=l.eod||{};
+  const fld=(k,label,hint)=>`<div><label>${label}</label><input inputmode="numeric" data-wf="eod:${k}" value="${v[k]}"><div class="note" style="margin-top:4px">${e[k]!=null?`Set by you. <button class="sm ghost" data-w="eodreset" data-k="${k}">Use the board count (${v.auto[k]})</button>`:esc(hint)}</div></div>`;
+  return `<div class="panel"><h2>End of shift</h2><div class="pb">
+    <pre class="wreport" id="wrep">${esc(wReport())}</pre>
+    <div class="row" style="margin-top:10px"><button class="pri" data-w="copy">Copy report</button></div>
+    <div class="grid2" style="margin-top:6px">${fld("lumpers",esc(ww),"Everyone checked in for this walk")}${fld("completed","Containers completed","Doors marked done on the board")}${fld("carried","Rollovers",v.auto.rollDoors.length?"Started, not finished: "+v.auto.rollDoors.join(", "):"Started, not finished")}</div>
+    ${WV.confirm==="end"?`<div class="confirm"><p><b>End this shift?</b> Everyone comes off their doors. Unfinished doors save as rollovers with just the part unloaded, and these EOD numbers save to ${esc(shiftName(l.shift))} on ${dayLbl(l.date)}.</p>
+      <div class="row"><button class="danger" data-w="end">End shift and save</button><button class="sm ghost" data-w="cancel">Cancel</button></div></div>`
+      :`<div class="row" style="margin-top:14px"><button data-w="confirm" data-k="end">End shift and save…</button></div>`}
+  </div></div>`;
+}
+function wLoggedHTML(date, shift){
+  const list=DB.containers.filter(c=>c.date===date && c.shift===shift).sort((a,b)=>(+a.door||0)-(+b.door||0));
+  return `<div class="panel"><h2>Logged doors <small>${dayLbl(date)} · ${esc(shiftName(shift))} · tap to edit</small></h2>
+    ${list.length?`<div class="scroll"><table><tr><th>Door</th><th>Status</th><th class="n">Pieces</th><th>Time</th><th>Crew</th></tr>
+    ${list.map(c=>`<tr class="click" data-w="editlog" data-id="${esc(c.id)}"><td>${esc(c.door)}</td><td>${esc(W_LOGST[c.status]||c.status)}</td><td class="n">${c.pieces?(+c.pieces).toLocaleString():"–"}</td><td>${esc(c.start||"?")}–${esc(c.end||"?")}</td><td>${(c.crew||[]).map(esc).join(", ")}</td></tr>`).join("")}</table></div>`
+    :`<div class="empty">No doors logged for this shift yet.</div>`}</div>`;
+}
+
+/* ---- sheets ---- */
+function wBarHTML(left){
+  return `<div class="cbar"><div class="rd"><b id="wbarv">${wLeft(left)}</b><span class="muted" id="wbars">${left>0&&left<100?(100-left)+"% done":""}</span></div>
+    <div class="tk" id="wtk" role="slider" tabindex="0" aria-label="Freight left. Tap where the freight ends." aria-valuemin="0" aria-valuemax="100" aria-valuenow="${left}"><div class="fl" style="width:${left}%"></div><i style="left:25%"></i><i style="left:50%"></i><i style="left:75%"></i></div>
+    <div class="ends"><span>Nose</span><span>Trailer doors</span></div>
+    <div class="wq">${[[100,"Full"],[75,"¾"],[50,"½"],[25,"¼"],[0,"Empty"]].map(([v,t])=>`<button class="${left===v?"on":""}" data-w="bar" data-v="${v}">${t}</button>`).join("")}</div></div>`;
+}
+const wSeg = (key, opts, val) => `<div class="wsg">${Object.entries(opts).map(([k,t])=>`<button class="${val===k?"on":""}" data-w="seg" data-key="${key}" data-v="${k}">${t}</button>`).join("")}</div>`;
+const wClose = `<button class="sm ghost" data-w="close" aria-label="Close">✕</button>`;
+function wSheetHTML(){
+  const s=WV.sheet, l=L();
+  if (s.kind==="slip"){
+    const d=WV.draft;
+    return `<div class="hd"><h3>Door ${d.door}</h3>${wClose}</div><div class="muted">Tap the bar where the freight ends. Empty means an empty trailer.</div>
+      <div class="sec">${wBarHTML(d.left)}</div>
+      ${d.left===0?`<div class="sec muted">Empty trailer. Nothing to unload, so it stays off the work list.</div>`
+        :`<div class="sec"><label>Boxes</label>${wSeg("boxes",W_BOX,d.boxes)}<label>Floor space in front of the door</label>${wSeg("floor",W_FLOOR,d.floor)}
+          <label class="check"><input type="checkbox" data-wf="d:blind" ${d.blind?"checked":""}> Can't see all the way in</label></div>`}
+      <div class="wstack"><button class="pri" data-w="slipsave">${d.mode==="walk"?"Save and go to the next door":"Save"}</button></div>`;
+  }
+  if (s.kind==="add"){
+    return `<div class="hd"><h3>Add a container</h3>${wClose}</div><label>Door #</label><input id="wadd" inputmode="numeric" maxlength="4" placeholder="Door it was plugged into">
+      <div class="wstack"><button class="pri" data-w="addgo">Next</button></div>`;
+  }
+  if (s.kind==="log"){
+    const r=WV.edit, names=[...new Set(crewList().concat(r.crew))];
+    return `<div class="hd"><h3>Door ${esc(r.door)}</h3>${wClose}</div><div class="muted">${dayLbl(r.date)} · ${esc(shiftName(r.shift))}</div>
+      <div class="grid2"><div><label>Door #</label><input data-wf="e:door" inputmode="numeric" value="${esc(r.door)}"></div><div><label>Container #</label><input data-wf="e:trailer" value="${esc(r.trailer||"")}" placeholder="optional"></div>
+        <div><label>Pieces</label><input data-wf="e:pieces" inputmode="numeric" value="${esc(r.pieces||"")}"></div>
+        <div><label>Status</label><select data-wf="e:status">${Object.entries(W_LOGST).map(([k,t])=>`<option value="${k}" ${r.status===k?"selected":""}>${t}</option>`).join("")}</select></div>
+        <div><label>Start</label><input type="time" data-wf="e:start" value="${esc(r.start||"")}"></div><div><label>End</label><input type="time" data-wf="e:end" value="${esc(r.end||"")}"></div></div>
+      <label>Crew <span style="text-transform:none">(tap names)</span></label><div class="wcrew">${names.map(n=>`<span class="wchip ${r.crew.includes(n)?"on":""}" data-w="ecrew" data-n="${esc(n)}">${esc(n)}</span>`).join("")}</div>
+      <label>Notes</label><input data-wf="e:notes" value="${esc(r.notes||"")}">
+      ${WV.confirm==="logdel"?`<div class="confirm"><p>Delete this logged door?</p><div class="row"><button class="danger" data-w="logdel">Delete</button><button class="sm ghost" data-w="cancel">Keep it</button></div></div>`
+        :`<div class="wstack"><button class="pri" data-w="logsave">Save changes</button><button class="sm ghost" data-w="confirm" data-k="logdel">Delete this door</button></div>`}`;
+  }
+  /* a live door */
+  const d=s.door, c=wc(d);
+  if (!c) return `<div class="hd"><h3>Door ${d}</h3>${wClose}</div><p class="muted">This door is open now.</p>`;
+  const st=wStatus(c), t=Date.now();
+  const sub=[W_ST[st]]; if(c.firstStart) sub.push("started "+wClk(c.firstStart)); if(c.doneAt) sub.push("done "+wClk(c.doneAt));
+  let h=`<div class="hd"><h3>Door ${d}</h3>${wClose}</div><div class="muted"><i class="wdot k-${st}"></i>${sub.join(", ")}</div>`;
+  if (st==="empty") return h+`<div class="wstack"><button class="pri" data-w="pulled">Trailer pulled</button><button data-w="hasfreight">It has freight</button>${wRemoveHTML(d)}</div>`;
+  if (!c.doneAt) h+=`<div class="sec">${wBarHTML(c.left)}</div>`;
+  h+=`<div class="sec"><div class="grid2"><div><label>Pieces <span style="text-transform:none">(manifest)</span></label><input data-wf="c:pieces" inputmode="numeric" value="${esc(c.pieces)}"></div>
+    <div><label>SKUs</label><input data-wf="c:skus" inputmode="numeric" value="${esc(c.skus)}"></div><div><label>Container #</label><input data-wf="c:trailer" value="${esc(c.trailer)}" placeholder="optional"></div></div></div>`;
+  if (!c.doneAt){
+    const l2=L();
+    h+=`<div class="sec"><label>On this door <span style="text-transform:none">(${c.workers.length} of ${W_MAX}, tap to add or take off)</span></label>
+      <div class="wcrew">${l2.here.map(n=>{ const at=wDoorOf(n); return `<span class="wchip ${c.workers.includes(n)?"on":""}" data-w="toggle" data-n="${esc(n)}">${esc(n)}${at!=null&&at!==d?` <small class="muted">${at}</small>`:""}</span>`; }).join("")||`<span class="muted">Nobody is checked in for this walk.</span>`}</div>
+      <label>Boxes</label>${wSeg("boxes",W_BOX,c.boxes)}<label>Floor space in front of the door</label>${wSeg("floor",W_FLOOR,c.floor)}
+      <label class="check"><input type="checkbox" data-wf="c:blind" ${c.blind?"checked":""}> Can't see all the way in</label></div>`;
+  }
+  h+=`<div class="sec wkv"><div><span>Started</span><b>${c.firstStart?wClk(c.firstStart):"–"}</b></div><div><span>Worked</span><b>${wDur(wWorked(c,t))}</b></div><div><span>${c.doneAt?"Finished":"Crew"}</span><b>${c.doneAt?wClk(c.doneAt):c.workers.length}</b></div></div>`;
+  h+=`<div class="sec"><label>Note</label><input data-wf="c:note" value="${esc(c.note)}" placeholder="Damaged freight, problem truck, why it was left"></div>`;
+  if (c.doneAt) h+=`<div class="wstack">${c.logId?`<button class="pri" data-w="editlog" data-id="${esc(c.logId)}">Edit logged times</button>`:""}<button data-w="pulled">Trailer pulled</button><button data-w="reopen">Reopen</button></div>`;
+  else h+=`<div class="wstack"><button class="pri" data-w="complete">Mark complete</button>${wRemoveHTML(d)}</div>`;
+  return h;
+}
+const wRemoveHTML = d => WV.confirm==="remove" ? `<div class="confirm"><p>Take door ${d} off the board? Its times and counts are deleted, and its logged door too.</p><div class="row"><button class="danger" data-w="remove">Remove</button><button class="sm ghost" data-w="cancel">Keep it</button></div></div>`
+  : `<button class="sm ghost" data-w="confirm" data-k="remove">Remove from board</button>`;
+
+function wRenderSheet(){
+  let root=document.getElementById("wsheet");
+  if (!WV.sheet || TAB!=="walk"){ if(root) root.remove(); return; }
+  const keep = root ? (root.querySelector(".sh")||{}).scrollTop||0 : 0;
+  if (!root){ root=document.createElement("div"); root.id="wsheet"; document.body.appendChild(root); }
+  root.innerHTML=`<div class="bk" data-w="close"></div><div class="sh" role="dialog" aria-modal="true">${wSheetHTML()}</div>`;
+  root.querySelector(".sh").scrollTop=keep;
+  const tk=document.getElementById("wtk"); if(tk) wBindBar(tk);
+}
+function wOpen(sheet){ WV.sheet=sheet; WV.confirm=null; wRenderSheet(); }
+function wCloseSheet(){ WV.sheet=null; WV.draft=null; WV.edit=null; WV.confirm=null; render(); }
+
+/* ---- after render: swipe, strip, bench, sheet ---- */
+function wAfter(){
+  const l=L(), onBoard = !!l && WV.mode==="board";
+  document.body.classList.toggle("w-hasbench", onBoard);
+  document.body.classList.toggle("wsel", !!WV.sel);
+  let bench=document.getElementById("wbenchroot");
+  if (onBoard){
+    if(!bench){ bench=document.createElement("div"); bench.id="wbenchroot"; document.body.appendChild(bench); }
+    const b=wBench();
+    bench.innerHTML=(WV.sel?`<div class="whint"><span>Moving <b>${esc(WV.sel)}</b>. Tap a door, or tap the bench to take them off.</span><button data-w="unsel">Cancel</button></div>`:"")+
+      `<div class="wbench" data-w="bench"><span class="bl">Bench <b>${b.length}</b></span><div class="bc">${b.map(n=>wChip(n,"bench")).join("")||`<span class="muted" style="font-size:13px">${l.here.length?"Everyone is on a door":"Nobody checked in"}</span>`}</div></div>`;
+  } else if (bench) bench.remove();
+  if (l && WV.mode==="walk"){
+    const cur=document.querySelector("#wstrip .cur"), strip=document.getElementById("wstrip");
+    if (cur && strip) strip.scrollLeft=cur.offsetLeft-strip.clientWidth/2+cur.offsetWidth/2;
+    const card=document.getElementById("wcard");
+    if (card){ wBindSwipe(card); if(card.style.opacity) requestAnimationFrame(()=>{ card.style.opacity=""; card.style.transform=""; }); }
+  }
+  wRenderSheet();
+}
+function wClear(){
+  document.body.classList.remove("w-hasbench","wsel");
+  const b=document.getElementById("wbenchroot"); if(b) b.remove();
+  const s=document.getElementById("wsheet"); if(s) s.remove();
+}
+function wBindSwipe(card){
+  let sx=0, dx=0, on=false, pid=null;
+  const set=x=>{ card.style.transform=x?`translateX(${x}px) rotate(${x/26}deg)`:""; card.style.setProperty("--pl",Math.min(1,Math.max(0,-x/110))); card.style.setProperty("--pr",Math.min(1,Math.max(0,x/110))); };
+  card.addEventListener("pointerdown",e=>{ if(e.button>0) return; on=true; pid=e.pointerId; sx=e.clientX; dx=0; try{card.setPointerCapture(pid);}catch(_){} card.classList.add("drag"); });
+  card.addEventListener("pointermove",e=>{ if(!on||e.pointerId!==pid) return; dx=e.clientX-sx; set(dx); });
+  const end=()=>{ if(!on) return; on=false; card.classList.remove("drag"); const th=Math.min(110,card.offsetWidth*.28);
+    if (dx>th) wFly(card,1,wTrailer); else if (dx<-th) wFly(card,-1,wNothing); else set(0); };
+  card.addEventListener("pointerup",end); card.addEventListener("pointercancel",end);
+}
+function wFly(card,dir,fn){ card.style.transition="transform .16s ease-in,opacity .16s"; card.style.transform=`translateX(${dir*(innerWidth+80)}px) rotate(${dir*12}deg)`; card.style.opacity="0"; setTimeout(fn,150); }
+function wBindBar(tk){
+  let on=false, val=+tk.getAttribute("aria-valuenow");
+  const pct=x=>{ const r=tk.getBoundingClientRect(); let p=Math.round(((x-r.left)/r.width*100)/5)*5; if(p>97) p=100; if(p<3) p=0; return Math.max(0,Math.min(100,p)); };
+  const show=v=>{ tk.querySelector(".fl").style.width=v+"%"; tk.setAttribute("aria-valuenow",v); document.getElementById("wbarv").textContent=wLeft(v); document.getElementById("wbars").textContent=v>0&&v<100?(100-v)+"% done":""; };
+  tk.addEventListener("pointerdown",e=>{ on=true; try{tk.setPointerCapture(e.pointerId);}catch(_){} val=pct(e.clientX); show(val); e.preventDefault(); });
+  tk.addEventListener("pointermove",e=>{ if(!on) return; const v=pct(e.clientX); if(v!==val){ val=v; show(v); } });
+  const end=()=>{ if(!on) return; on=false; wSetBar(val); };
+  tk.addEventListener("pointerup",end); tk.addEventListener("pointercancel",end);
+}
+function wSetBar(v){
+  if (WV.sheet && WV.sheet.kind==="slip"){ WV.draft.left=v; wRenderSheet(); return; }
+  const c=WV.sheet && wc(WV.sheet.door); if(!c) return;
+  c.left=v; if(!wWork(c)) c.initialLeft=v; save(); render();
+}
+
+/* ---- walk actions ---- */
+const wDoorAt = () => { const l=L(); return l ? wDoors()[l.pos|0] : null; };
+function wNothing(){
+  const l=L(), d=wDoorAt(); if(d==null) return;
+  const c=wc(d);
+  if (c && wWork(c) && !c.doneAt){ toast("Door "+d+" has work going. Finish or remove it on the board."); render(); return; }
+  if (c && c.doneAt) l.past.push(c);
+  l.doors[d]={state:"none", c:null}; l.pos=(l.pos|0)+1; WV.cardIn=true; save(); render();
+}
+function wTrailer(){
+  const d=wDoorAt(); if(d==null) return; const c=wc(d);
+  WV.draft = c && !c.doneAt ? {door:d, mode:"walk", left:c.left, boxes:c.boxes, floor:c.floor, blind:c.blind} : {door:d, mode:"walk", left:100, boxes:null, floor:null, blind:false};
+  render(); wOpen({kind:"slip"});
+}
+function wSlipSave(){
+  const l=L(), d=WV.draft; if(!d||!l) return;
+  let c=wc(d.door);
+  if (c && (d.mode==="add" || c.doneAt)){ if(c.doneAt) l.past.push(c); c=null; }
+  if (!c) c=wNew();
+  const work=wWork(c);
+  c.left=d.left; if(!work) c.initialLeft=d.left; c.empty = d.left===0 && !work; c.blind=!!d.blind; c.boxes=d.boxes; c.floor=d.floor;
+  l.doors[d.door]={state:"trailer", c};
+  if (d.mode==="walk"){ const i=wDoors().indexOf(d.door); l.pos = i>=0 ? i+1 : (l.pos|0)+1; WV.cardIn=true; }
+  WV.sheet=null; WV.draft=null; save(); render();
+  if (d.mode!=="walk") toast("Door "+d.door+" is on the board");
+}
+function wMove(n, where){
+  const l=L(), t=Date.now(), from=wDoorOf(n);
+  WV.sel=null;
+  if (where==="bench"){ if(from!=null){ const fc=wc(from); wUnassign(fc,n,t); save(); toast(fc.workers.length?n+" is on the bench":n+" is on the bench. Door "+from+" is partial now."); } render(); return; }
+  const d=+where, c=wc(d);
+  if (!c || c.doneAt || c.empty){ render(); toast("Door "+d+" isn't open for work"); return; }
+  if (from===d){ render(); return; }
+  if (c.workers.length>=W_MAX){ render(); toast("Door "+d+" already has "+W_MAX+" people"); return; }
+  if (from!=null) wUnassign(wc(from),n,t);
+  wAssign(c,n,t); save(); render();
+}
+function wComplete(d){
+  const c=wc(d); if(!c) return; const t=Date.now();
+  c.workers.slice().forEach(n=>wUnassign(c,n,t)); c.doneAt=t; c.left=0;
+  wLog(d, c, wDoneStatus(c), t); WV.sheet=null; WV.confirm=null; save(); render();
+  toast("Door "+d+" done and logged");
+}
+
+document.addEventListener("click", e=>{
+  const el=e.target.closest("[data-w]"); if(!el || el.disabled) return;
+  const a=el.dataset.w, l=L();
+  switch(a){
+    case "here": { const s=WV.start, n=el.dataset.n; s.here.has(n)?s.here.delete(n):s.here.add(n); render(); break; }
+    case "start": wStartShift(); break;
+    case "mode": WV.mode=el.dataset.m; WV.sel=null; WV.confirm=null; render(); window.scrollTo(0,0); break;
+    case "jump": l.pos=+el.dataset.i; WV.mode="walk"; WV.cardIn=true; save(); render(); break;
+    case "none": wNothing(); break;
+    case "trailer": wTrailer(); break;
+    case "back": l.pos=Math.max(0,(l.pos|0)-1); WV.cardIn=true; save(); render(); break;
+    case "skip": l.pos=(l.pos|0)+1; WV.cardIn=true; save(); render(); break;
+    case "close": wCloseSheet(); break;
+    case "bar": wSetBar(+el.dataset.v); break;
+    case "seg": { const k=el.dataset.key, v=el.dataset.v;
+      if (WV.sheet.kind==="slip"){ WV.draft[k]=WV.draft[k]===v?null:v; wRenderSheet(); }
+      else { const c=wc(WV.sheet.door); if(c){ c[k]=c[k]===v?null:v; save(); render(); } } break; }
+    case "slipsave": wSlipSave(); break;
+    case "door": { const d=+el.dataset.d; if(WV.sel){ wMove(WV.sel,d); break; } WV.confirm=null; wOpen({kind:"door", door:d}); break; }
+    case "pick": { const n=el.dataset.n; WV.sel = WV.sel===n ? null : n; render(); break; }
+    case "bench": if(WV.sel) wMove(WV.sel,"bench"); break;
+    case "unsel": WV.sel=null; render(); break;
+    case "toggle": { const d=WV.sheet.door, c=wc(d), n=el.dataset.n;
+      if (c.workers.includes(n)){ wUnassign(c,n,Date.now()); save(); render(); } else wMove(n,d);
+      break; }
+    case "complete": wComplete(WV.sheet.door); break;
+    case "reopen": { const d=WV.sheet.door, c=wc(d); if(c.logId) DB.containers=DB.containers.filter(x=>x.id!==c.logId); c.logId=null; c.doneAt=null; if(c.left===0) c.left=5; save(); render(); toast("Door "+d+" is open again"); break; }
+    case "pulled": { const d=WV.sheet.door, c=wc(d); if(c && c.doneAt) l.past.push(c); l.doors[d]={state:"none", c:null}; WV.sheet=null; save(); render(); toast("Door "+d+" is open"); break; }
+    case "hasfreight": { const d=WV.sheet.door, c=wc(d); WV.draft={door:d, mode:"add", left:100, boxes:c&&c.boxes, floor:c&&c.floor, blind:false}; WV.sheet={kind:"slip"}; wRenderSheet(); break; }
+    case "remove": { const d=WV.sheet.door, c=wc(d); if(c){ c.workers.slice().forEach(n=>wUnassign(c,n,Date.now())); if(c.logId) DB.containers=DB.containers.filter(x=>x.id!==c.logId); }
+      l.doors[d]={state:"none", c:null}; WV.sheet=null; WV.confirm=null; save(); render(); toast("Door "+d+" is off the board"); break; }
+    case "confirm": WV.confirm=el.dataset.k; if(WV.sheet) wRenderSheet(); else render(); break;
+    case "cancel": WV.confirm=null; if(WV.sheet) wRenderSheet(); else render(); break;
+    case "add": wOpen({kind:"add"}); setTimeout(()=>{ const i=document.getElementById("wadd"); if(i) i.focus(); },50); break;
+    case "addgo": { const v=parseInt((document.getElementById("wadd")||{}).value,10); if(!v){ toast("Add a door number"); break; }
+      const c=wc(v); if(c && !c.doneAt && !c.empty){ toast("Door "+v+" already has a container being worked"); break; }
+      WV.draft={door:v, mode:"add", left:100, boxes:null, floor:null, blind:false}; WV.sheet={kind:"slip"}; wRenderSheet(); break; }
+    case "editlog": { const r=DB.containers.find(x=>x.id===el.dataset.id); if(!r){ toast("That door isn't logged anymore"); break; }
+      WV.edit=Object.assign({}, r, {crew:[...(r.crew||[])]}); WV.confirm=null; WV.sheet={kind:"log", id:r.id}; wRenderSheet(); break; }
+    case "ecrew": { const n=el.dataset.n, r=WV.edit; r.crew = r.crew.includes(n) ? r.crew.filter(x=>x!==n) : r.crew.concat(n); el.classList.toggle("on"); break; }
+    case "logsave": { const r=DB.containers.find(x=>x.id===WV.sheet.id), d=WV.edit; if(!r){ wCloseSheet(); break; }
+      if (!String(d.door||"").trim()){ toast("Add a door number"); break; }
+      const timesChanged = d.start!==r.start || d.end!==r.end;
+      Object.assign(r, {door:String(d.door).trim(), trailer:(d.trailer||"").trim(), pieces:String(d.pieces||"").replace(/\D/g,""), status:d.status, start:d.start, end:d.end, crew:d.crew, notes:(d.notes||"").trim()});
+      if (timesChanged) r.edited=true;
+      save(); renderRange(); wCloseSheet(); toast("Door "+r.door+" saved"); break; }
+    case "logdel": { const id=WV.sheet.id; DB.containers=DB.containers.filter(x=>x.id!==id);
+      if (l) Object.values(l.doors).forEach(rr=>{ if(rr.c && rr.c.logId===id){ rr.c.logId=null; rr.c.doneAt=null; if(rr.c.left===0) rr.c.left=5; } });
+      save(); wCloseSheet(); toast("Logged door deleted"); break; }
+    case "eodreset": { l.eod[el.dataset.k]=null; delete l.eod[el.dataset.k]; save(); render(); break; }
+    case "copy": { const t=wReport(); (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast("Copied. Paste it in the group chat."),()=>{ const p=document.getElementById("wrep"); if(p){ const r=document.createRange(); r.selectNodeContents(p); const s=getSelection(); s.removeAllRanges(); s.addRange(r); } toast("Press and hold the report to copy it"); }); break; }
+    case "end": wEndShift(); break;
+  }
+});
+document.addEventListener("input", e=>{
+  const el=e.target, f=el.dataset && el.dataset.wf; if(!f) return;
+  const [scope,key]=f.includes(":")?f.split(":"):[f,""];
+  const val = el.type==="checkbox" ? el.checked : el.value;
+  if (scope==="doors"){ wcfg().doors=val; save(); return; }
+  if (scope==="s"){ WV.start[key]=val; if(key==="shift") WV.start.here=null; if(key!=="date"||val) render(); return; }
+  if (scope==="d"){ WV.draft[key]=val; return; }
+  if (scope==="e"){ WV.edit[key]=val; return; }
+  if (scope==="eod"){ const l=L(), n=val.replace(/\D/g,""); l.eod[key]= n==="" ? null : +n; if(n==="") delete l.eod[key]; save(); const p=document.getElementById("wrep"); if(p) p.textContent=wReport(); return; }
+  if (scope==="c"){ const d=WV.sheet && WV.sheet.door, c=wc(d); if(!c) return;
+    c[key] = key==="pieces"||key==="skus" ? String(val).replace(/\D/g,"") : val;
+    if (key==="blind"){ save(); return; }
+    wRelog(d); save(); return; }
+});
+document.addEventListener("change", e=>{ const f=e.target.dataset && e.target.dataset.wf; if(!f) return;
+  if (f==="doors"){ const n=wParse(e.target.value).length; if(!n){ toast("Couldn't read those doors. Try 111-149, 200-249."); } render(); return; }
+});
+document.addEventListener("keydown", e=>{
+  if (TAB!=="walk") return;
+  if (e.key==="Escape" && WV.sheet){ wCloseSheet(); return; }
+  if (e.key==="Enter" && e.target.id==="wadd"){ e.preventDefault(); const b=document.querySelector('[data-w="addgo"]'); if(b) b.click(); return; }
+  const typing=/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName);
+  if (!typing && !WV.sheet && L() && WV.mode==="walk"){ if(e.key==="ArrowLeft"){ e.preventDefault(); wNothing(); } else if(e.key==="ArrowRight"){ e.preventDefault(); wTrailer(); } }
+});
+setInterval(()=>{ if(TAB!=="walk" || !L()) return; const t=Date.now();
+  document.querySelectorAll("[data-wt]").forEach(el=>{ const c=wc(+el.dataset.wt); if(c && !c.empty) el.textContent=wTimeText(c,t); }); }, 30000);
+
 
 /* ---------------- events ---------------- */
 document.addEventListener("click", e=>{
